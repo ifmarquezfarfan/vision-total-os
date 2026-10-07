@@ -19,22 +19,33 @@ export default async function LoginPage({
 
         <form action={signIn} className="form" style={{ marginTop: 24 }}>
           <div className="field">
-            <label htmlFor="email">Correo</label>
-            <input id="email" name="email" type="email" required autoComplete="email" />
+            <label htmlFor="login-email">Correo</label>
+            <input id="login-email" name="email" type="email" required autoComplete="email" />
           </div>
           <div className="field">
-            <label htmlFor="password">Contraseña</label>
-            <input id="password" name="password" type="password" required minLength={6} autoComplete="current-password" />
+            <label htmlFor="login-password">Contraseña</label>
+            <input id="login-password" name="password" type="password" required minLength={6} autoComplete="current-password" />
           </div>
           <button className="btn btn-primary" type="submit">Entrar</button>
         </form>
 
-        <form action={signUp} style={{ marginTop: 10 }}>
-          <input type="hidden" name="email" value="" />
-          <input type="hidden" name="password" value="" />
-          <p className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
-            Para crear la primera cuenta, usa el mismo formulario con tus credenciales desde Supabase Auth o habilitamos un registro dedicado en el siguiente paso.
-          </p>
+        <div style={{ borderTop: "1px solid var(--line)", margin: "26px 0 20px" }} />
+
+        <h2 style={{ margin: 0, fontSize: 17 }}>Primera vez aquí</h2>
+        <p className="muted" style={{ fontSize: 12 }}>
+          Crea la cuenta administradora inicial de Visión Total OS.
+        </p>
+
+        <form action={signUp} className="form" style={{ marginTop: 14 }}>
+          <div className="field">
+            <label htmlFor="signup-email">Correo</label>
+            <input id="signup-email" name="email" type="email" required autoComplete="email" />
+          </div>
+          <div className="field">
+            <label htmlFor="signup-password">Contraseña</label>
+            <input id="signup-password" name="password" type="password" required minLength={6} autoComplete="new-password" />
+          </div>
+          <button className="btn btn-secondary" type="submit">Crear cuenta</button>
         </form>
       </section>
     </main>
