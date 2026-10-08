@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { createProduct, adjustStock, deactivateProduct } from "./actions";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { QuickStart } from "@/components/quick-start";
+import { LensProductFields } from "@/components/lens-product-fields";
 
 export default async function InventoryPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;adjusted?:string;deactivated?:string;q?:string}>}) {
   const supabase=await createClient();
@@ -78,6 +79,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date"/></div>
       </div>
       <label className="checkline"><input type="checkbox" name="displayed"/> Está exhibida</label>
+      <LensProductFields />
       <div className="field"><label>Observaciones</label><input name="notes" placeholder="Detalles internos"/></div>
       <button className="btn btn-primary">Crear producto</button>
     </form></div>
