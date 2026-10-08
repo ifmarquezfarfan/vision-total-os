@@ -205,7 +205,7 @@ export default async function ClientDetailPage({
               {!canWritePrescription && <p className="notice">Tu perfil puede consultar datos ópticos, pero no modificarlos.</p>}
 
               <div className="section">
-                <div className="table-wrap"><table style={{minWidth: 1500}}><thead><tr><th>Examen</th><th>Uso / profesional</th><th>OD lejos</th><th>OI lejos</th><th>OD cerca</th><th>OI cerca</th><th>Prisma OD / OI</th><th>DP</th><th>Vence</th><th>Notas</th></tr></thead><tbody>
+                <div className="table-wrap"><table style={{minWidth: 1500}}><thead><tr><th>Examen</th><th>Uso / profesional</th><th>OD principal</th><th>OI principal</th><th>OD cerca</th><th>OI cerca</th><th>Prisma OD / OI</th><th>DP</th><th>Vence</th><th>Notas</th></tr></thead><tbody>
                   {(prescriptions ?? []).map((p) => <tr key={p.id}>
                     <td>{new Date(p.exam_at).toLocaleDateString("es-PE")}<div className="muted">{p.rx_source||"Origen no indicado"}</div></td>
                     <td>{p.rx_type||"·"}<div className="muted">{p.prescriber_name||"Profesional no indicado"}{p.prescriber_license?" · "+p.prescriber_license:""}</div><div className="muted">Cilindro {p.cylinder_notation==="positive"?"positivo":"negativo"}</div></td>
