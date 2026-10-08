@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
+import { QuickStart } from "@/components/quick-start";
 import { createLead, updateLeadStage } from "./actions";
 
 export default async function LeadsPage({
@@ -32,12 +33,18 @@ export default async function LeadsPage({
         <div className="content">
           <h1 className="page-title">Leads</h1>
           <p className="subtitle">Oportunidades antes de convertirse en ventas.</p>
+          <QuickStart title="Inicio rápido de leads" hint="Lead = oportunidad. Cuando ya compra, el registro definitivo pasa a Ventas." items={[
+            {label:"Nuevo lead",href:"#nuevo-lead",description:"Captura oportunidad",tone:"blue"},
+            {label:"Cotizar",href:"/cotizaciones",description:"Convierte interés en propuesta",tone:"purple"},
+            {label:"Vender",href:"/ventas",description:"Cierra la operación",tone:"green"},
+            {label:"Dar seguimiento",href:"/seguimientos",description:"Define próxima acción",tone:"orange"}
+          ]}/>
 
           {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
           {params.created && <p className="notice" style={{marginTop:18}}>Lead registrado correctamente.</p>}
           {params.updated && <p className="notice" style={{marginTop:18}}>Lead actualizado.</p>}
 
-          <section className="card section">
+          <section id="nuevo-lead" className="card section">
             <h2>Nuevo lead</h2>
             <form action={createLead} className="form">
               <div className="form-grid">
@@ -67,6 +74,7 @@ export default async function LeadsPage({
                       <td>{lead.estimated_amount ? `S/ ${Number(lead.estimated_amount).toFixed(2)}` : "·"}</td>
                       <td>
                         <form action={updateLeadStage} className="inline">
+
                           <input type="hidden" name="lead_id" value={lead.id} />
                           <select name="stage" defaultValue={lead.stage}>
                             {Object.entries(stageName).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
