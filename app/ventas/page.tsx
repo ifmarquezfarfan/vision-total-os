@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { SaleBuilder } from "@/components/sale-builder";
 import { ClientPicker } from "@/components/client-picker";
 import { createSale } from "./actions";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function SalesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string}>}){
   const supabase=await createClient();
@@ -28,9 +29,15 @@ export default async function SalesPage({searchParams}:{searchParams:Promise<{er
     <header className="topbar"><strong>Ventas</strong><span className="muted">Caja óptica</span></header>
     <div className="content">
       <div className="spread"><div><h1 className="page-title">Nueva venta</h1><p className="subtitle">Registra en pocos pasos la operación completa de una óptica.</p></div><Link href="/clientes" className="btn btn-secondary">Nuevo cliente</Link></div>
+      <QuickStart title="Inicio rápido de venta" hint="La ruta normal es Cliente → productos → pago → venta. Para un segundo o tercer par, agrega otro bloque de 3 líneas." items={[
+        {label:"Venta óptica típica",href:"#nueva-venta",description:"Montura + lunas + tratamiento",tone:"green"},
+        {label:"Solo producto",href:"#nueva-venta",description:"Montura, luna o accesorio",tone:"blue"},
+        {label:"Pedido de laboratorio",href:"/pedidos",description:"Después de vender, pasa a Pedido óptico",tone:"purple"},
+        {label:"Postventa",href:"/seguimientos",description:"Deja la próxima acción",tone:"orange"}
+      ]}/>
       {params.error&&<p className="notice" style={{marginTop:18}}>{params.error}</p>}
       {params.created&&<p className="notice" style={{marginTop:18}}>Venta registrada: {params.created}</p>}
-      <section className="card section"><h2>Cliente y pago</h2><form action={createSale} className="form">
+      <section id="nueva-venta" className="card section"><h2>Cliente y pago</h2><form action={createSale} className="form">
         <div className="form-grid">
           <div className="field"><label>Cliente</label><ClientPicker clients={clients??[]}/></div>
           <div className="field"><label>Lead relacionado</label><select name="lead_id" defaultValue=""><option value="">Sin lead</option>{(leads??[]).map(l=><option key={l.id} value={l.id}>{l.lead_code} · {l.full_name}</option>)}</select></div>
