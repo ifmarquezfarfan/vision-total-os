@@ -110,6 +110,18 @@ export default async function ClientDetailPage({
                   if (numericNames.some((name)=>String(formData.get(name)??"").trim()!==""&&!Number.isFinite(Number(formData.get(name))))) redirect("/clientes/"+id+"?error=Hay%20un%20valor%20numérico%20inválido%20en%20la%20receta");
                   const axisNames = ["od_axis","os_axis","od_near_axis","os_near_axis"];
                   if (axisNames.some((name)=>{const value=numeric(name);return value!==null&&(!Number.isInteger(value)||value<1||value>180);})) redirect("/clientes/"+id+"?error=El%20eje%20debe%20estar%20entre%201%20y%20180");
+                  const prismPairs: Array<[string,string,string[]]> = [
+                    ["od_prism_horizontal","od_prism_horizontal_base",["BI","BO"]],
+                    ["od_prism_vertical","od_prism_vertical_base",["BU","BD"]],
+                    ["os_prism_horizontal","os_prism_horizontal_base",["BI","BO"]],
+                    ["os_prism_vertical","os_prism_vertical_base",["BU","BD"]]
+                  ];
+                  const invalidPrism = prismPairs.some(([amountName,baseName,allowed])=>{
+                    const amount=numeric(amountName);
+                    const base=String(formData.get(baseName)??"").trim();
+                    return (amount!==null&&amount<0)||(base!==""&&!allowed.includes(base))||(amount!==null&&amount>0&&base==="")||(base!==""&&amount===null);
+                  });
+                  if(invalidPrism) redirect("/clientes/"+id+"?error=Completa%20el%20valor%20y%20la%20base%20del%20prisma");
                   const cylinderNotation = String(formData.get("cylinder_notation")??"negative");
                   if (!["negative","positive"].includes(cylinderNotation)) redirect("/clientes/"+id+"?error=Formato%20de%20cilindro%20inválido");
                   const pdValues = ["pd","pd_od","pd_os"].map(numeric).filter((v):v is number=>v!==null);
