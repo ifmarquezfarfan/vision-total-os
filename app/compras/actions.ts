@@ -35,6 +35,8 @@ export async function createPurchase(formData: FormData) {
   const { supabase, organizationId, branchId } = await getContext();
   const supplierId = String(formData.get("supplier_id") ?? "") || null;
   const discount = Number(formData.get("discount") ?? 0);
+  const paidAmount = Number(formData.get("paid_amount") ?? 0);
+  const paymentMethod = String(formData.get("payment_method") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
 
   const items = [];
@@ -44,18 +46,19 @@ export async function createPurchase(formData: FormData) {
     const quantity = Math.floor(Number(formData.get(`quantity_${i}`) ?? 0));
     const unitCost = Number(formData.get(`cost_${i}`) ?? 0);
     if (!productId && !description && !unitCost) continue;
-    if (quantity <= 0 || !Number.isFinite(unitCost) || unitCost < 0) {
-      redirect("/compras?error=Hay%20un%20ítem%20de%20compra%20inválido");
-    }
+    if (quantity <= 0 || !Number.isFinite(unitCost) || unitCost < 0) redirect("/compras?error=Hay%20un%20ítem%20de%20compra%20inválido");
     items.push({ product_id: productId || null, description: description || undefined, quantity, unit_cost: unitCost });
   }
   if (!items.length) redirect("/compras?error=Agrega%20al%20menos%20un%20ítem");
+  if (paidAmount > 0 && !paymentMethod) redirect("/compras?error=Selecciona%20el%20medio%20de%20pago");
 
   const { data, error } = await supabase.rpc("receive_purchase_transaction", {
     target_org: organizationId,
     target_branch: branchId,
     target_supplier: supplierId,
     target_discount: Number.isFinite(discount) && discount >= 0 ? discount : 0,
+    target_paid: Number.isFinite(paidAmount) && paidAmount >= 0 ? paidAmount : 0,
+    target_payment_method: paymentMethod || null,
     target_notes: notes || null,
     items
   });
