@@ -2,12 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createProduct, adjustStock } from "./actions";
+import { createProduct, adjustStock, deactivateProduct } from "./actions";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export default async function InventoryPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; created?: string; adjusted?: string; q?: string }>;
+  searchParams: Promise<{ error?: string; created?: string; adjusted?: string; deactivated?: string; q?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -65,7 +66,7 @@ export default async function InventoryPage({
 
           {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
           {params.created && <p className="notice" style={{marginTop:18}}>Producto creado correctamente.</p>}
-          {params.adjusted && <p className="notice" style={{marginTop:18}}>Stock ajustado correctamente.</p>}
+          {params.adjusted && <p className="notice" style={{marginTop:18}}>Stock ajustado correctamente.</p>}\n          {params.deactivated && <p className="notice" style={{marginTop:18}}>Producto dado de baja.</p>}
 
           <section className="grid grid-3 section">
             <div className="card"><div className="metric-label">Artículos</div><div className="metric-value">{products?.length ?? 0}</div></div>
@@ -115,7 +116,7 @@ export default async function InventoryPage({
             </div>
             <div className="table-wrap" style={{marginTop:14}}>
               <table style={{minWidth:1200}}>
-                <thead><tr><th>Código</th><th>Producto</th><th>Detalle</th><th>Venta</th><th>Stock</th><th>Ubicación</th><th>Exhibida</th><th>Estado físico</th><th>Ingreso</th></tr></thead>
+                <thead><tr><th>Código</th><th>Producto</th><th>Detalle</th><th>Venta</th><th>Stock</th><th>Ubicación</th><th>Exhibida</th><th>Estado físico</th><th>Ingreso</th><th></th></tr></thead>
                 <tbody>
                   {(products??[]).map(p=>{
                     const stock=productStock.get(p.id);
@@ -132,7 +133,7 @@ export default async function InventoryPage({
                       <td>{p.entry_at?new Date(p.entry_at).toLocaleDateString("es-PE"):"·"}</td>
                     </tr>
                   })}
-                  {!products?.length&&<tr><td colSpan={9} className="muted">{q?"No se encontró ningún producto.":"Todavía no hay productos."}</td></tr>}
+                  {!products?.length&&<tr><td colSpan={10} className="muted">{q?"No se encontró ningún producto.":"Todavía no hay productos."}</td></tr>}
                 </tbody>
               </table>
             </div>
