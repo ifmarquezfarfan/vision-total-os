@@ -1,36 +1,14 @@
 "use server";
 
+import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [], field = "", quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (quoted) {
-      if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
-      else if (ch === '"') quoted = false;
-      else field += ch;
-    } else if (ch === '"') quoted = true;
-    else if (ch === ',') { row.push(field.trim()); field = ""; }
-    else if (ch === '\n') { row.push(field.trim()); field = ""; if (row.some(Boolean)) rows.push(row); row = []; }
-    else if (ch !== '\r') field += ch;
-  }
-  row.push(field.trim());
-  if (row.some(Boolean)) rows.push(row);
-  return rows;
-}
 
 function key(value: string) {
   return value.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
 }
 
-export async function importClientsCsv(formData: FormData) {
-  const file = formData.get("file");
-  if (!(file instanceof File)) redirect("/importacion?error=Adjunta%20un%20CSV");
-  if (file.size > 2_000_000) redirect("/importacion?error=El%20archivo%20supera%202MB");
-
+async function getContext() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -39,50 +17,95 @@ export async function importClientsCsv(formData: FormData) {
   const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
   if (!membership || !branch) redirect("/onboarding");
 
-  const rows = parseCsv(await file.text());
-  if (rows.length < 2) redirect("/importacion?error=El%20CSV%20no%20contiene%20datos");
+  return { supabase, userId: user.id, organizationId: membership.organization_id, branchId: branch.branch_id };
+}
 
-  const headers = rows[0].map(key);
-  const findIndex = (a: string, b: string) => headers.indexOf(a) >= 0 ? headers.indexOf(a) : headers.indexOf(b);
-  const nameIndex = findIndex("full_name", "nombre_completo");
-  if (nameIndex < 0) redirect("/importacion?error=Falta%20la%20columna%20full_name");
+function parseFile(buffer: ArrayBuffer, fileName: string): Record<string, string>[] {
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!firstSheet) return [];
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+  return rows.map((row) => {
+    const normalized: Record<string, string> = {};
+    for (const [rawKey, rawValue] of Object.entries(row)) {
+      normalized[key(rawKey)] = String(rawValue ?? "").trim();
+    }
+    return normalized;
+  });
+}
 
-  const dniIndex = headers.indexOf("dni");
-  const phoneIndex = headers.indexOf("phone");
-  const whatsappIndex = headers.indexOf("whatsapp");
-  const emailIndex = headers.indexOf("email");
-  const districtIndex = headers.indexOf("district");
-  const preferredIndex = headers.indexOf("preferred_channel");
-  const optInIndex = headers.indexOf("marketing_opt_in");
+function truthy(value: string) {
+  return ["true", "1", "si", "sí", "yes", "x"].includes(value.trim().toLowerCase());
+}
 
-  const clean = rows.slice(1).filter(r => r[nameIndex]?.trim()).slice(0, 1000);
-  const existingDnis = new Set<string>();
+export async function importClientsFile(formData: FormData) {
+  const file = formData.get("file");
+  if (!(file instanceof File)) redirect("/importacion?error=Adjunta%20un%20archivo%20Excel%20o%20CSV");
+  if (file.size > 5_000_000) redirect("/importacion?error=El%20archivo%20supera%205MB");
 
-  if (clean.some(r => r[dniIndex]?.trim())) {
-    const { data: existing } = await supabase.from("clients").select("dni").eq("organization_id", membership.organization_id).not("dni", "is", null).limit(5000);
-    for (const row of existing ?? []) if (row.dni) existingDnis.add(String(row.dni).trim());
+  const { supabase, organizationId, branchId } = await getContext();
+
+  let rows: Record<string, string>[] = [];
+  try {
+    rows = parseFile(await file.arrayBuffer(), file.name);
+  } catch {
+    redirect("/importacion?error=No%20se%20pudo%20leer%20el%20archivo");
   }
 
-  const payload = clean.flatMap((r, i) => {
-    const dni = dniIndex >= 0 ? r[dniIndex]?.trim() : "";
-    if (dni && existingDnis.has(dni)) return [];
+  const clean = rows
+    .filter((row) => (row.full_name || row.nombre_completo || "").trim())
+    .slice(0, 1000);
+
+  if (!clean.length) redirect("/importacion?error=No%20se%20encontraron%20filas%20válidas%20con%20nombre");
+
+  const get = (row: Record<string, string>, ...names: string[]) => {
+    for (const name of names) {
+      const value = row[key(name)] ?? "";
+      if (value.trim()) return value.trim();
+    }
+    return "";
+  };
+
+  const dniValues = clean.map((row) => get(row, "dni")).filter(Boolean);
+  const existingDnis = new Set<string>();
+
+  if (dniValues.length) {
+    const { data: existing } = await supabase
+      .from("clients")
+      .select("dni")
+      .eq("organization_id", organizationId)
+      .not("dni", "is", null)
+      .limit(5000);
+
+    for (const item of existing ?? []) {
+      if (item.dni) existingDnis.add(String(item.dni).trim());
+    }
+  }
+
+  const seenDnis = new Set(existingDnis);
+  const payload = clean.flatMap((row) => {
+    const dni = get(row, "dni");
+    if (dni && seenDnis.has(dni)) return [];
+    if (dni) seenDnis.add(dni);
+
     return [{
-      client_code: "CLI-IMP-" + Date.now().toString().slice(-6) + "-" + String(i + 1).padStart(3, "0"),
-      full_name: r[nameIndex].trim(),
+      full_name: get(row, "full_name", "nombre_completo", "nombre"),
       dni: dni || null,
-      phone: phoneIndex >= 0 ? (r[phoneIndex]?.trim() || null) : null,
-      whatsapp: whatsappIndex >= 0 ? (r[whatsappIndex]?.trim() || null) : null,
-      email: emailIndex >= 0 ? (r[emailIndex]?.trim() || null) : null,
-      district: districtIndex >= 0 ? (r[districtIndex]?.trim() || null) : null,
-      preferred_channel: preferredIndex >= 0 ? (r[preferredIndex]?.trim() || null) : null,
-      marketing_opt_in: optInIndex >= 0 ? ["true","1","si","sí","yes"].includes((r[optInIndex] ?? "").trim().toLowerCase()) : false,
-      organization_id: membership.organization_id,
-      branch_id: branch.branch_id
+      phone: get(row, "phone", "telefono", "teléfono") || null,
+      whatsapp: get(row, "whatsapp", "celular") || null,
+      email: get(row, "email", "correo") || null,
+      district: get(row, "district", "distrito") || null,
+      preferred_channel: get(row, "preferred_channel", "canal_preferido", "canal") || null,
+      marketing_opt_in: truthy(get(row, "marketing_opt_in", "autorizacion", "autorizado")),
+      organization_id: organizationId,
+      branch_id: branchId
     }];
   });
 
   if (!payload.length) redirect("/importacion?error=No%20hay%20clientes%20nuevos%20para%20importar");
+
   const { error } = await supabase.from("clients").insert(payload);
   if (error) redirect("/importacion?error=No%20se%20pudo%20importar%20el%20archivo");
+
   redirect("/importacion?imported=" + encodeURIComponent(String(payload.length)));
 }
