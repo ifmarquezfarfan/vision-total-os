@@ -70,5 +70,7 @@ export async function createSale(formData: FormData) {
 
   if (error) redirect("/ventas?error=" + encodeURIComponent(error.message.includes("Insufficient stock") ? "Stock insuficiente para uno de los productos" : "No se pudo registrar la venta"));
   const saleCode = typeof data === "object" && data && "sale_code" in data ? String((data as {sale_code:string}).sale_code) : "venta";
+  const saleId = typeof data === "object" && data && "sale_id" in data ? String((data as {sale_id:string}).sale_id) : "";
+  if (saleId) redirect("/ventas/" + saleId + "?created=" + encodeURIComponent(saleCode));
   redirect("/ventas?created=" + encodeURIComponent(saleCode));
 }
