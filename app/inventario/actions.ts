@@ -35,7 +35,7 @@ export async function createProduct(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const cost = Number(formData.get("cost") ?? 0);
   const salePrice = Number(formData.get("sale_price") ?? 0);
-  const initialStock = Math.max(0, Math.floor(Number(formData.get("initial_stock") ?? 0)));
+  const initialStock = Math.max(0, Math.floor(Number(formData.get("initial_stock") ?? 0)));\n  const color = String(formData.get("color") ?? "").trim();\n  const material = String(formData.get("material") ?? "").trim();\n  const displayed = formData.get("displayed") === "on";\n  const physicalStatus = String(formData.get("physical_status") ?? "Bueno").trim();\n  const entryAtRaw = String(formData.get("entry_at") ?? "").trim();\n  const notes = String(formData.get("notes") ?? "").trim();
 
   if (!brand && !model && !description) {
     redirect("/inventario?error=Ingresa%20al%20menos%20marca%2C%20modelo%20o%20descripción");
