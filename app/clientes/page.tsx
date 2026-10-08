@@ -7,7 +7,7 @@ import { createClientRecord } from "./actions";
 export default async function ClientsPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; created?: string }>;
+  searchParams: Promise<{ error?: string; created?: string; q?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -23,13 +23,24 @@ export default async function ClientsPage({
 
   if (!membership) redirect("/onboarding");
 
-  const { data: clients } = await supabase
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim();
+
+  let clientQuery = supabase
     .from("clients")
-    .select("id, client_code, full_name, dni, phone, whatsapp, status, marketing_opt_in, created_at")
+    .select("id,client_code,full_name,dni,phone,whatsapp,status,marketing_opt_in,created_at")
     .order("created_at", { ascending: false })
     .limit(300);
 
-  const params = await searchParams;
+  if (q) {
+    if (/^\d{6,15}$/.test(q)) {
+      clientQuery = clientQuery.eq("dni", q);
+    } else {
+      clientQuery = clientQuery.ilike("full_name", "%" + q.replace(/[%_]/g, "") + "%");
+    }
+  }
+
+  const { data: clients } = await clientQuery;
 
   return (
     <div className="shell">
@@ -37,11 +48,24 @@ export default async function ClientsPage({
       <main className="main">
         <header className="topbar"><strong>Clientes</strong><span className="muted">{user.email}</span></header>
         <div className="content">
-          <h1 className="page-title">Clientes</h1>
-          <p className="subtitle">La memoria comercial de Visión Total: datos, compras, seguimiento y relación posterior.</p>
+          <div className="spread">
+            <div>
+              <h1 className="page-title">Clientes</h1>
+              <p className="subtitle">La memoria comercial de Visión Total: datos, compras, seguimiento y relación posterior.</p>
+            </div>
+          </div>
 
-          {params.error && <p className="notice" style={{ marginTop: 18 }}>{params.error}</p>}
-          {params.created && <p className="notice" style={{ marginTop: 18 }}>Cliente registrado correctamente.</p>}
+          {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
+          {params.created && <p className="notice" style={{marginTop:18}}>Cliente registrado correctamente.</p>}
+
+          <section className="card section">
+            <h2>Buscar cliente</h2>
+            <form method="get" className="inline">
+              <input name="q" defaultValue={q} placeholder="Nombre o DNI" style={{flex:1,minWidth:220}} />
+              <button className="btn btn-secondary">Buscar</button>
+              {q && <Link href="/clientes" className="btn btn-secondary">Limpiar</Link>}
+            </form>
+          </section>
 
           <section className="card section">
             <h2>Nuevo cliente</h2>
@@ -61,25 +85,32 @@ export default async function ClientsPage({
           </section>
 
           <section className="section">
-            <h2>Cartera</h2>
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Código</th><th>Cliente</th><th>DNI</th><th>WhatsApp</th><th>Estado</th><th>Comunicaciones</th></tr></thead>
-                <tbody>
-                  {(clients ?? []).map((client) => (
-                    <tr key={client.id}>
-                      <td>{client.client_code}</td>
-                      <td><Link href={`/clientes/${client.id}`} className="link-strong">{client.full_name}</Link></td>
-                      <td>{client.dni || "·"}</td>
-                      <td>{client.whatsapp || client.phone || "·"}</td>
-                      <td>{client.status}</td>
-                      <td>{client.marketing_opt_in ? "Autorizado" : "No autorizado"}</td>
-                    </tr>
-                  ))}
-                  {!clients?.length && <tr><td colSpan={6} className="muted">Todavía no hay clientes registrados.</td></tr>}
-                </tbody>
-              </table>
-            </div>
+            <h2>{q ? "Resultados" : "Cartera"}</h2>
+            <div className="table-wrap"><table>
+              <thead><tr><th>Código</th><th>Cliente</th><th>DNI</th><th>WhatsApp</th><th>Estado</th><th>Comunicaciones</th></tr></thead>
+              <tbody>
+                {(clients ?? []).map(client => (
+                  <tr key={client.id}>
+                    <td>{client.client_code}</td>
+                    <td><Link href={"/clientes/"+client.id} className="link-strong">{client.full_name}</Link></td>
+                    <td>{client.dni || "·"}</td>
+                    <td>
+                      {client.whatsapp || client.phone ? (
+                        <a
+                          href={"https://wa.me/51" + String(client.whatsapp || client.phone).replace(/\D/g,"").replace(/^51/,"")}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="link-strong"
+                        >Abrir</a>
+                      ) : "·"}
+                    </td>
+                    <td>{client.status}</td>
+                    <td>{client.marketing_opt_in ? "Autorizado" : "No autorizado"}</td>
+                  </tr>
+                ))}
+                {!clients?.length && <tr><td colSpan={6} className="muted">{q ? "No se encontró ningún cliente." : "Todavía no hay clientes registrados."}</td></tr>}
+              </tbody>
+            </table></div>
           </section>
         </div>
       </main>
