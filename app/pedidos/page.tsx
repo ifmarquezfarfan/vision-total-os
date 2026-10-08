@@ -6,7 +6,7 @@ import { createOrder } from "./actions";
 
 const statusLabel:Record<string,string>={received:"Recibido",in_preparation:"En preparación",at_lab:"En laboratorio",ready:"Listo",delivered:"Entregado",cancelled:"Cancelado"};
 
-export default async function OrdersPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string}>}) {
+export default async function OrdersPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;from_sale?:string}>}) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user) redirect("/login");
@@ -26,28 +26,72 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
   const productMap=new Map((products??[]).map(p=>[p.id,[p.brand,p.model].filter(Boolean).join(" ")||p.product_code]));
   const params=await searchParams;
 
+  const primarySaleId = String(params.from_sale ?? "");
+  const primarySale = primarySaleId ? (sales ?? []).find(s => s.id === primarySaleId) : null;
+
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Pedidos ópticos</strong><span className="muted">{user.email}</span></header><div className="content">
-    <h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">Desde la receta y elección de montura hasta laboratorio, control de calidad, aviso y entrega.</p>
+    <div className="spread"><div><h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">La orden de laboratorio concentra receta, lentes, montura, medidas, tratamientos, QC, entrega y adaptación.</p></div><Link href="/ventas" className="btn btn-secondary">Volver a ventas</Link></div>
     {params.error&&<p className="notice" style={{marginTop:18}}>{params.error}</p>}{params.created&&<p className="notice" style={{marginTop:18}}>Pedido creado.</p>}{params.updated&&<p className="notice" style={{marginTop:18}}>Pedido actualizado.</p>}
 
-    <section className="card section"><h2>Nuevo pedido</h2><form action={createOrder} className="form"><div className="form-grid">
-      <div className="field"><label>Cliente *</label><select name="client_id" required defaultValue=""><option value="">Seleccionar</option>{(clients??[]).map(c=><option key={c.id} value={c.id}>{c.full_name}{c.dni ? " · "+c.dni : ""}</option>)}</select></div>
-      <div className="field"><label>Venta relacionada</label><select name="sale_id" defaultValue=""><option value="">Ninguna</option>{(sales??[]).map(s=><option key={s.id} value={s.id}>{s.sale_code}</option>)}</select></div>
-      <div className="field"><label>Receta</label><select name="prescription_id" defaultValue=""><option value="">Sin receta</option>{(prescriptions??[]).map(p=><option key={p.id} value={p.id}>{new Date(p.exam_at).toLocaleDateString("es-PE")} · {clientMap.get(p.client_id)||"Cliente"}</option>)}</select></div>
-      <div className="field"><label>Montura</label><select name="frame_product_id" defaultValue=""><option value="">Sin montura vinculada</option>{(products??[]).map(p=><option key={p.id} value={p.id}>{p.product_code} · {productMap.get(p.id)||""}</option>)}</select></div>
-      <div className="field"><label>Tipo de lente</label><input name="lens_type" placeholder="Monofocal, progresivo, etc."/></div>
-      <div className="field"><label>Tratamientos</label><input name="treatments" placeholder="Antirreflejo, filtro, etc."/></div>
-      <div className="field"><label>Laboratorio</label><input name="lab"/></div>
-      <div className="field"><label>Referencia de laboratorio</label><input name="lab_reference"/></div>
-      <div className="field"><label>Fecha prometida</label><input name="promised_at" type="datetime-local"/></div>
-      <div className="field"><label>Seguimiento adaptación</label><input name="adaptation_followup_at" type="datetime-local"/></div>
-      <div className="field"><label>Estado inicial</label><select name="status" defaultValue="received"><option value="received">Recibido</option><option value="in_preparation">En preparación</option><option value="at_lab">En laboratorio</option><option value="ready">Listo</option></select></div>
-      <div className="field"><label>Notas</label><input name="notes"/></div>
-    </div><button className="btn btn-primary">Crear pedido</button></form></section>
+    <section className="card section"><h2>Nuevo pedido óptico</h2>
+      {primarySale&&<div className="notice" style={{marginBottom:16}}>Creando pedido para <strong>{primarySale.sale_code}</strong> · {clientMap.get(primarySale.client_id)||"Cliente"}.</div>}
+      <form action={createOrder} className="form">
+        <div className="field"><label>Cliente *</label><select name="client_id" required defaultValue={primarySale?.client_id||""}><option value="">Seleccionar</option>{(clients??[]).map(c=><option key={c.id} value={c.id}>{c.full_name}{c.dni ? " · "+c.dni : ""}</option>)}</select></div>
+        <input type="hidden" name="sale_id" value={primarySale?.id||""}/>
+        <div className="grid grid-3" style={{marginTop:14}}>
+          <div className="card"><h2>Producto óptico</h2>
+            <div className="field"><label>Receta</label><select name="prescription_id" defaultValue=""><option value="">Sin receta</option>{(prescriptions??[]).map(p=><option key={p.id} value={p.id}>{new Date(p.exam_at).toLocaleDateString("es-PE")} · {clientMap.get(p.client_id)||"Cliente"}</option>)}</select></div>
+            <div className="field"><label>Montura</label><select name="frame_product_id" defaultValue=""><option value="">Sin montura vinculada</option>{(products??[]).map(p=><option key={p.id} value={p.id}>{p.product_code} · {productMap.get(p.id)||""}</option>)}</select></div>
+          </div>
+          <div className="card"><h2>Lunas</h2>
+            <div className="field"><label>Diseño</label><select name="lens_design" defaultValue=""><option value="">Seleccionar</option><option value="Monofocal">Monofocal</option><option value="Bifocal">Bifocal</option><option value="Progresivo">Progresivo</option><option value="Ocupacional">Ocupacional</option><option value="Otro">Otro</option></select></div>
+            <div className="field"><label>Material</label><select name="lens_material" defaultValue=""><option value="">Seleccionar</option><option value="CR-39">CR-39</option><option value="Policarbonato">Policarbonato</option><option value="1.56">1.56</option><option value="1.60">1.60</option><option value="1.67">1.67</option><option value="1.74">1.74</option><option value="Otro">Otro</option></select></div>
+            <div className="field"><label>Índice</label><input name="lens_index" placeholder="Ej. 1.56" /></div>
+            <div className="field"><label>Marca de luna</label><input name="lens_brand" placeholder="Ej. Essilor, Hoya, Zeiss" /></div>
+            <div className="field"><label>Tipo / descripción</label><input name="lens_type" placeholder="Ej. Digital, ocupacional, fotocromática" /></div>
+          </div>
+          <div className="card"><h2>Tratamientos y laboratorio</h2>
+            <div className="field"><label>Tratamientos</label><input name="treatments" placeholder="Antirreflejo, filtro, fotocromático, etc." /></div>
+            <div className="field"><label>Laboratorio</label><input name="lab" /></div>
+            <div className="field"><label>Referencia de laboratorio</label><input name="lab_reference" /></div>
+            <div className="field"><label>Fecha prometida</label><input name="promised_at" type="datetime-local" /></div>
+          </div>
+        </div>
 
-    <section className="section"><h2>Pedidos recientes</h2><div className="table-wrap"><table><thead><tr><th>Código</th><th>Cliente</th><th>Estado</th><th>QC</th><th>Laboratorio</th><th>Prometido</th><th>Acceso</th></tr></thead><tbody>
-      {(orders??[]).map(o=><tr key={o.id}><td><Link href={"/pedidos/"+o.id} className="link-strong">{o.order_code}</Link></td><td>{clientMap.get(o.client_id)||"Cliente"}</td><td>{statusLabel[o.status]||o.status}</td><td>{o.qc_status}</td><td>{o.lab||"·"}</td><td>{o.promised_at?new Date(o.promised_at).toLocaleString("es-PE"):"·"}</td><td><Link href={"/pedidos/"+o.id} className="link-strong">Gestionar</Link></td></tr>)}
-      {!orders?.length&&<tr><td colSpan={7} className="muted">Todavía no hay pedidos ópticos.</td></tr>}
+        <div className="card" style={{marginTop:14}}>
+          <h2>Medidas de montaje</h2>
+          <p className="muted">No todas son necesarias en todos los trabajos. Se guardan estructuradas para que el pedido pueda viajar completo al laboratorio.</p>
+          <div className="form-grid">
+            <div className="field"><label>DP binocular</label><input name="pd_binocular" placeholder="mm" /></div>
+            <div className="field"><label>DP monocular OD</label><input name="pd_od" placeholder="mm" /></div>
+            <div className="field"><label>DP monocular OI</label><input name="pd_os" placeholder="mm" /></div>
+            <div className="field"><label>Altura OD</label><input name="height_od" placeholder="mm" /></div>
+            <div className="field"><label>Altura OI</label><input name="height_os" placeholder="mm" /></div>
+            <div className="field"><label>Distancia vértice</label><input name="vertex" placeholder="mm" /></div>
+            <div className="field"><label>Inclinación pantoscópica</label><input name="pantoscopic" placeholder="°" /></div>
+            <div className="field"><label>Ángulo de envolvimiento</label><input name="wrap" placeholder="°" /></div>
+            <div className="field"><label>Calibre A</label><input name="frame_a" placeholder="mm" /></div>
+            <div className="field"><label>Calibre B</label><input name="frame_b" placeholder="mm" /></div>
+            <div className="field"><label>Puente DBL</label><input name="frame_dbl" placeholder="mm" /></div>
+            <div className="field"><label>Patilla / Temple</label><input name="frame_temple" placeholder="mm" /></div>
+          </div>
+        </div>
+
+        <div className="grid grid-3" style={{marginTop:14}}>
+          <div className="card"><h2>Flujo</h2>
+            <div className="field"><label>Seguimiento adaptación</label><input name="adaptation_followup_at" type="datetime-local" /></div>
+            <div className="field"><label>Estado inicial</label><select name="status" defaultValue="received"><option value="received">Recibido</option><option value="in_preparation">En preparación</option><option value="at_lab">En laboratorio</option><option value="ready">Listo</option></select></div>
+          </div>
+          <div className="card" style={{gridColumn:"span 2"}}><h2>Notas</h2><div className="field"><label>Indicaciones especiales</label><input name="notes" placeholder="Curvatura, perforado, montaje especial, observaciones..." /></div></div>
+        </div>
+
+        <button className="btn btn-primary">Crear pedido óptico</button>
+      </form>
+    </section>
+
+    <section className="section"><h2>Pedidos recientes</h2><div className="table-wrap"><table><thead><tr><th>Código</th><th>Cliente</th><th>Estado</th><th>QC</th><th>Lunas</th><th>Laboratorio</th><th>Prometido</th><th></th></tr></thead><tbody>
+      {(orders??[]).map(o=><tr key={o.id}><td><Link href={"/pedidos/"+o.id} className="link-strong">{o.order_code}</Link></td><td>{clientMap.get(o.client_id)||"Cliente"}</td><td>{statusLabel[o.status]||o.status}</td><td>{o.qc_status}</td><td>{o.lens_type||"·"}</td><td>{o.lab||"·"}</td><td>{o.promised_at?new Date(o.promised_at).toLocaleString("es-PE"):"·"}</td><td><Link href={"/pedidos/"+o.id} className="link-strong">Gestionar</Link></td></tr>)}
+      {!orders?.length&&<tr><td colSpan={8} className="muted">Todavía no hay pedidos ópticos.</td></tr>}
     </tbody></table></div></section>
   </div></main></div>;
 }
