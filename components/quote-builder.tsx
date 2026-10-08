@@ -41,7 +41,7 @@ export function QuoteBuilder({products}:{products:Product[]}) {
     <div className="table-wrap"><table style={{minWidth:1120}}><thead><tr><th>Producto</th><th>Componente</th><th>Descripción</th><th>Cant.</th><th>Precio</th><th>Costo</th><th>Desc.</th><th></th></tr></thead><tbody>
       {rows.map((row,index)=>{
         const selected=row.productId?map.get(row.productId):null;
-        return <tr key={row.id}>
+        return <><React.Fragment key={row.id+"group"}>{index%3===0&&<tr><td colSpan={8} className="sale-block-label">Paquete {Math.floor(index/3)+1} · {index===0?"Primera operación":"Par adicional"}</td></tr>}</React.Fragment><tr key={row.id}>
           <td style={{minWidth:280}}><input list="quote-products" value={row.productText} onChange={e=>selectProduct(row.id,e.target.value)} placeholder="Código de producto" autoComplete="off"/><input type="hidden" name={`product_${index+1}`} value={row.productId}/><span className="field-hint">{selected?[selected.brand,selected.model].filter(Boolean).join(" ")||selected.description||"Producto seleccionado":"Personalizado"}</span></td>
           <td><select name={`component_${index+1}`} value={row.componentType} onChange={e=>update(row.id,{componentType:e.target.value})}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></td>
           <td><input name={`description_${index+1}`} value={row.description} onChange={e=>update(row.id,{description:e.target.value})} placeholder="Descripción"/></td>
