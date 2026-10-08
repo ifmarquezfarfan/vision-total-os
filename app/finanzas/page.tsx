@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { createExpense } from "./actions";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function FinancePage({
   searchParams
@@ -49,6 +50,12 @@ export default async function FinancePage({
         <div className="content">
           <h1 className="page-title">Finanzas</h1>
           <p className="subtitle">Ventas, cobranzas, compras, gastos y caja del mes. El resultado distingue facturación de dinero realmente cobrado.</p>
+          <QuickStart title="Inicio rápido de finanzas" hint="Consulta primero. Registra movimientos solo desde la pantalla que corresponde a su naturaleza." items={[
+            {label:"Cobrar una venta",href:"/ventas",description:"La operación nace en Ventas",tone:"green"},
+            {label:"Registrar gasto",href:"#registrar-gasto",description:"Costo operativo",tone:"orange"},
+            {label:"Registrar compra",href:"/compras",description:"Abastecimiento",tone:"blue"},
+            {label:"Auditar cambios",href:"/auditoria",description:"Revisar trazabilidad",tone:"purple"}
+          ]}/>
 
           {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
           {params.created && <p className="notice" style={{marginTop:18}}>Gasto registrado: {params.created}</p>}
@@ -66,7 +73,7 @@ export default async function FinancePage({
             <div className="card"><div className="metric-label">Cuentas por cobrar</div><div className="metric-value">S/ {pendingSales.toFixed(2)}</div></div>
           </section>
 
-          <section className="card section">
+          <section id="registrar-gasto" className="card section">
             <h2>Registrar gasto</h2>
             <form action={createExpense} className="form">
               <div className="form-grid">
