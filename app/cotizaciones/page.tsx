@@ -36,7 +36,8 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
     {params.error&&<p className="notice" style={{marginTop:18}}>{params.error}</p>}
     {params.created&&<p className="notice" style={{marginTop:18}}>Cotización creada: {params.created}</p>}
     {params.updated&&<p className="notice" style={{marginTop:18}}>Estado actualizado.</p>}
-    {params.converted&&<p className="notice" style={{marginTop:18}}>Cotización convertida en venta: {params.converted}</p>}\n    {params.deleted&&<p className="notice" style={{marginTop:18}}>Cotización eliminada.</p>}
+    {params.converted&&<p className="notice" style={{marginTop:18}}>Cotización convertida en venta: {params.converted}</p>}
+    {params.deleted&&<p className="notice" style={{marginTop:18}}>Cotización eliminada.</p>}
 
     <section id="nueva-cotizacion" className="card section"><h2>Nueva cotización</h2><form action={createQuote} className="form">
       <div className="form-grid">
