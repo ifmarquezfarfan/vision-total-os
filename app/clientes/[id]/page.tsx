@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { updateClientRecord } from "../actions";
+import { updateClientRecord, deleteClientRecord } from "../actions";\nimport { ConfirmSubmit } from "@/components/confirm-submit";
 
 export default async function ClientDetailPage({
   params,
@@ -39,7 +39,7 @@ export default async function ClientDetailPage({
         <div className="content">
           <div className="spread">
             <div><h1 className="page-title">{client.full_name}</h1><p className="subtitle">{client.client_code} · desde {new Date(client.created_at).toLocaleDateString("es-PE")}</p></div>
-            <a className="btn btn-secondary" href="/clientes">Volver a clientes</a>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><a className="btn btn-secondary" href="/clientes">Volver a clientes</a><form action={deleteClientRecord}><input type="hidden" name="id" value={client.id}/><ConfirmSubmit message="Eliminar este cliente? Si tiene historial, se desactivará para conservar la trazabilidad.">Eliminar / desactivar</ConfirmSubmit></form></div>
           </div>
 
           {query.error && <p className="notice" style={{ marginTop: 18 }}>{query.error}</p>}
