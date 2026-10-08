@@ -57,7 +57,6 @@ export async function Sidebar() {
       </nav>
 
       <form action={signOut} className="sidebar-footer">
-        <Link href="/perfil" className="sidebar-profile-link">Mi cuenta</Link>
         <button className="btn btn-secondary" style={{width:"100%"}}>Cerrar sesión</button>
       </form>
     </aside>
