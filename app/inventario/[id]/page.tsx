@@ -23,7 +23,7 @@ export default async function ProductDetailPage({
   if (!membership || !branch) redirect("/onboarding");
 
   const [{ data: product }, { data: stockRows }, { data: locations }, { data: movements }] = await Promise.all([
-    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,photo_url,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
+    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
     supabase.from("inventory_stock").select("location_id,quantity").eq("product_id",id).limit(100),
     supabase.from("inventory_locations").select("id,name").eq("branch_id",branch.branch_id).eq("active",true).order("created_at"),
     supabase.from("inventory_movements").select("id,quantity,movement_type,note,created_at").eq("product_id",id).eq("branch_id",branch.branch_id).order("created_at",{ascending:false}).limit(30),
@@ -41,16 +41,13 @@ export default async function ProductDetailPage({
         <Link href="/inventario" className="btn btn-secondary">Volver a inventario</Link>
       </div>
 
-      <QuickStart title="Ficha del producto" hint="Aquí se mantiene la memoria del artículo: foto, datos, stock y movimientos." items={[
+      <QuickStart title="Ficha del producto" hint="Aquí se mantiene la memoria del artículo: datos, stock y movimientos." items={[
   {label:"Editar ficha",href:"#ficha-producto",description:"Datos comerciales y físicos",tone:"blue"},
   {label:"Ver stock",href:"#stock-ubicaciones",description:"Dónde está cada unidad",tone:"green"},
   {label:"Ver movimientos",href:"#movimientos",description:"Entradas y salidas",tone:"orange"},
   {label:"Volver al catálogo",href:"/inventario",description:"Continuar operación",tone:"purple"}
 ]}/>
-<section className="product-photo-hero card section">
-  {product.photo_url?<img src={product.photo_url} alt={[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}/>:<div className="photo-empty-large"><span>Sin foto</span><small>Sube una imagen en la ficha del producto.</small></div>}
-  <div><div className="eyebrow">Vista del producto</div><h2>{[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}</h2><p className="muted">{product.color||"Color no registrado"} · {product.material||"Material no registrado"}</p></div>
-</section>
+<section className="card section"><div className="eyebrow">Ficha del producto</div><h2>{[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}</h2><p className="muted">{product.color||"Color no registrado"} · {product.material||"Material no registrado"}</p><span className="field-hint">La carga de fotografías se habilitará en una siguiente etapa.</span></section>
 {q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>}
       {q.updated&&<p className="notice" style={{marginTop:18}}>Producto actualizado.</p>}
 
@@ -62,7 +59,7 @@ export default async function ProductDetailPage({
       </section>
 
       {canManage && <section id="ficha-producto" className="card section"><h2>Ficha del producto</h2>
-        <form action={updateProduct} className="form" encType="multipart/form-data">
+        <form action={updateProduct} className="form">
           <input type="hidden" name="id" value={product.id}/>
           <div className="form-grid">
             <div className="field"><label>Categoría</label><select name="category" defaultValue={product.category}><option>Montura</option><option>Lentes</option><option>Tratamiento</option><option>Accesorio</option><option>Servicio</option><option>Otro</option></select></div>
@@ -77,7 +74,6 @@ export default async function ProductDetailPage({
             <div className="field"><label>Modo de inventario</label><select name="inventory_mode" defaultValue={product.inventory_mode}><option value="stock">Stock físico</option><option value="on_demand">Por pedido / bajo demanda</option><option value="service">Servicio, sin stock</option></select></div>
             <div className="field"><label>Estado físico</label><select name="physical_status" defaultValue={product.physical_status}><option>Bueno</option><option>Regular</option><option>Dañado</option><option>Baja</option><option>Otro</option></select></div>
             <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date" defaultValue={product.entry_at?new Date(product.entry_at).toISOString().slice(0,10):""}/></div>
-          <div className="field"><label>Cambiar foto</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"/></div>
           </div>
           <label className="checkline"><input type="checkbox" name="displayed" defaultChecked={product.displayed}/> Está exhibida</label>
           <div className="field"><label>Observaciones</label><input name="notes" defaultValue={product.notes||""}/></div>
