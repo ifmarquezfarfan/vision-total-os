@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { createClientRecord, deleteClientRecord } from "./actions";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function ClientsPage({
   searchParams
@@ -53,6 +54,12 @@ export default async function ClientsPage({
             <div>
               <h1 className="page-title">Clientes</h1>
               <p className="subtitle">La memoria comercial de Visión Total: datos, compras, seguimiento y relación posterior.</p>
+              <QuickStart title="Inicio rápido de clientes" hint="Primero busca. Crea solo cuando no exista el cliente. Luego decide si la conversación sigue como lead, cotización o venta." items={[
+                {label:"Buscar",href:"#buscar-cliente",description:"DNI o nombre",tone:"blue"},
+                {label:"Nuevo cliente",href:"#nuevo-cliente",description:"Crear ficha",tone:"green"},
+                {label:"Ver historial",href:"#cartera",description:"Compras y seguimiento",tone:"purple"},
+                {label:"Registrar venta",href:"/ventas",description:"Cuando ya compra",tone:"orange"}
+              ]}/>
             </div>
           </div>
 
@@ -61,7 +68,7 @@ export default async function ClientsPage({
           {params.deleted && <p className="notice" style={{marginTop:18}}>Cliente eliminado.</p>}
           {params.archived && <p className="notice" style={{marginTop:18}}>El cliente tenía historial y fue desactivado para conservar la trazabilidad.</p>}
 
-          <section className="card section">
+          <section id="buscar-cliente" className="card section">
             <h2>Buscar cliente</h2>
             <form method="get" className="inline">
               <input name="q" defaultValue={q} placeholder="Nombre o DNI" style={{flex:1,minWidth:220}} />
@@ -70,7 +77,7 @@ export default async function ClientsPage({
             </form>
           </section>
 
-          <section className="card section">
+          <section id="nuevo-cliente" className="card section">
             <h2>Nuevo cliente</h2>
             <form action={createClientRecord} className="form">
               <div className="form-grid">
@@ -87,7 +94,7 @@ export default async function ClientsPage({
             </form>
           </section>
 
-          <section className="section">
+          <section id="cartera" className="section">
             <h2>{q ? "Resultados" : "Cartera"}</h2>
             <div className="table-wrap"><table>
               <thead><tr><th>Código</th><th>Cliente</th><th>DNI</th><th>WhatsApp</th><th>Estado</th><th>Comunicaciones</th><th></th></tr></thead>
@@ -107,7 +114,7 @@ export default async function ClientsPage({
                         >Abrir</a>
                       ) : "·"}
                     </td>
-                    <td>{client.status}</td>
+                    <td><span className={`status-badge ${client.status==="active"?"status-success":"status-neutral"}`}>{client.status==="active"?"Activo":client.status}</span></td>
                     <td>{client.marketing_opt_in ? "Autorizado" : "No autorizado"}</td>
                     <td><form action={deleteClientRecord}><input type="hidden" name="id" value={client.id}/><ConfirmSubmit message="Eliminar cliente? Si tiene historial, se desactivará para conservar la trazabilidad.">Eliminar</ConfirmSubmit></form></td>
                   </tr>
