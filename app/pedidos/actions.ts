@@ -73,14 +73,26 @@ export async function updateOrderOperational(formData: FormData) {
   if(!orderId||!["received","in_preparation","at_lab","ready","delivered","cancelled"].includes(status)||!["pending","approved","rework"].includes(qcStatus)) redirect("/pedidos?error=Datos%20inválidos");
 
   const {supabase}=await getContext();
+
+  const { data: currentOrder } = await supabase
+    .from("optical_orders")
+    .select("id,status,qc_status")
+    .eq("id",orderId)
+    .maybeSingle();
+
+  if (!currentOrder) redirect("/pedidos?error=Pedido%20no%20encontrado");
+  if (status==="delivered" && qcStatus!=="approved") redirect("/pedidos?error=No%20puedes%20entregar%20un%20pedido%20sin%20QC%20aprobado");
+  if (status==="ready" && qcStatus==="rework") redirect("/pedidos?error=Un%20pedido%20para%20revisión%20no%20puede%20marcarse%20como%20listo");
+  if (status==="delivered" && !pickupNotified) redirect("/pedidos?error=Marca%20que%20el%20cliente%20fue%20avisado%20antes%20de%20entregar");
+
   const {error}=await supabase.from("optical_orders").update({
     status,qc_status:qcStatus,lab_reference:labReference||null,
     pickup_notified_at:pickupNotified?new Date().toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
-    delivered_at:status==="delivered"?new Date().toISOString():null,
+    delivered_at:status==="delivered"?(currentOrder.status==="delivered"?undefined:new Date().toISOString()):null,
     delivery_notes:deliveryNotes||null
   }).eq("id",orderId);
 
   if(error) redirect("/pedidos?error=No%20se%20pudo%20actualizar%20el%20pedido");
-  redirect("/pedidos?updated=1");
+  redirect("/pedidos/"+encodeURIComponent(orderId)+"?updated=1");
 }
