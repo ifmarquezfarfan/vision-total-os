@@ -104,7 +104,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
           <td>{p.displayed?"Sí":"No"}</td><td><span className={`status-badge ${p.physical_status==="Bueno"?"status-success":p.physical_status==="Regular"?"status-warning":"status-danger"}`}>{p.physical_status}</span></td><td>{p.entry_at?new Date(p.entry_at).toLocaleDateString("es-PE"):"·"}</td>
           <td>{canManage&&qty===0?<form action={deactivateProduct}><input type="hidden" name="product_id" value={p.id}/><ConfirmSubmit message="Dar de baja este producto? Se conservará el historial.">Dar de baja</ConfirmSubmit></form>:"·"}</td>
         </tr>})}
-        {!products?.length&&<tr><td colSpan={10} className="muted">{q?"No se encontró ningún producto.":"Todavía no hay productos."}</td></tr>}
+        {!products?.length&&<tr><td colSpan={11} className="muted">{q?"No se encontró ningún producto.":"Todavía no hay productos."}</td></tr>}
       </tbody></table></div>
     </section>
 
