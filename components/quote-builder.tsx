@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-type Product={id:string;product_code:string;brand:string|null;model:string|null;description:string|null;cost:number;sale_price:number};
+type Product={id:string;product_code:string;category:string|null;brand:string|null;model:string|null;description:string|null;cost:number;sale_price:number};
 type Row={id:number;productId:string;productText:string;componentType:string;description:string;quantity:number;price:string;cost:string;discount:string};
 
 const options=[["frame","Montura"],["lens","Lunas"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
