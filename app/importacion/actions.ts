@@ -238,7 +238,7 @@ export async function importInventoryFile(formData: FormData) {
       material: get(row, "material"),
       cost: numberValue(get(row, "precio_de_costo", "costo", "cost")),
       sale_price: numberValue(get(row, "precio_de_venta_actual", "precio_venta", "sale_price", "precio")),
-      quantity: integerValue(get(row, "unidades", "stock", "cantidad")),
+      quantity: integerValue(get(row, "unidades", "stock", "cantidad")),\n      inventory_mode: (() => { const raw=get(row,"modo_inventario","inventory_mode"); if(/servicio/i.test(raw)) return "service"; if(/pedido|demanda/i.test(raw)) return "on_demand"; return "stock"; })(),
       min_stock: integerValue(get(row, "stock_minimo", "min_stock")),
       legacy_location: get(row, "ubicacion_actual", "ubicacion", "location"),
       displayed: truthy(get(row, "exhibida", "exhibido", "displayed")),
