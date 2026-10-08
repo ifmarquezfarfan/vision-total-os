@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createFollowUp } from "./actions";
+import { createFollowUp, deleteFollowUp } from "./actions";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export default async function FollowUpsPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; created?: string }>;
+  searchParams: Promise<{ error?: string; created?: string; deleted?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +37,7 @@ export default async function FollowUpsPage({
           <p className="subtitle">La agenda comercial: cada interacción deja una próxima acción o un cierre.</p>
 
           {params.error && <p className="notice" style={{ marginTop: 18 }}>{params.error}</p>}
-          {params.created && <p className="notice" style={{ marginTop: 18 }}>Seguimiento registrado correctamente.</p>}
+          {params.created && <p className="notice" style={{ marginTop: 18 }}>Seguimiento registrado correctamente.</p>}\n          {params.deleted && <p className="notice" style={{ marginTop: 18 }}>Seguimiento eliminado.</p>}
 
           <section className="card section">
             <h2>Registrar interacción</h2>
@@ -59,7 +60,7 @@ export default async function FollowUpsPage({
             <h2>Historial</h2>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>Código</th><th>Cliente / Lead</th><th>Tipo</th><th>Canal</th><th>Resultado</th><th>Próxima acción</th><th>Estado</th></tr></thead>
+                <thead><tr><th>Código</th><th>Cliente / Lead</th><th>Tipo</th><th>Canal</th><th>Resultado</th><th>Próxima acción</th><th>Estado</th><th></th></tr></thead>
                 <tbody>
                   {(followUps ?? []).map((item) => (
                     <tr key={item.id}>
@@ -72,7 +73,7 @@ export default async function FollowUpsPage({
                       <td>{item.status}</td>
                     </tr>
                   ))}
-                  {!followUps?.length && <tr><td colSpan={7} className="muted">Todavía no hay seguimientos registrados.</td></tr>}
+                  {!followUps?.length && <tr><td colSpan={8} className="muted">Todavía no hay seguimientos registrados.</td></tr>}
                 </tbody>
               </table>
             </div>
