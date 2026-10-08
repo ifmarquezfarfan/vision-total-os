@@ -32,7 +32,7 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
   const primarySale = primarySaleId ? (sales ?? []).find(s => s.id === primarySaleId) : null;
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Pedidos ópticos</strong><span className="muted">{user.email}</span></header><div className="content">
-    <div className="spread"><div><h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">La orden de laboratorio concentra receta, lentes, montura, medidas, tratamientos, QC, entrega y adaptación.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/ventas" className="btn btn-secondary">Volver a ventas</Link></div></div>
+    <div className="spread"><div><h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">La orden de laboratorio concentra receta de lejos/cerca, prisma, centrado, montura, diseño/material/índice/PHI, recubrimientos, QC, entrega y adaptación.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/ventas" className="btn btn-secondary">Volver a ventas</Link></div></div>
     <QuickStart title="Inicio rápido de pedido óptico" hint="Ruta recomendada: venta → receta → montura → configuración de luna → medidas → laboratorio → QC → aviso → entrega." items={[
       {label:"Pedido desde venta",href:"#nuevo-pedido",description:"Mantén el contexto completo",tone:"green"},
       {label:"Captura especializada",href:"#configuracion-optica",description:"Lunas, tratamientos y laboratorio",tone:"blue"},
