@@ -27,6 +27,10 @@ export function SaleBuilder({products,showCostField,allowPriceOverride}:{product
   };
   const applyPreset=(types:string[])=>setRows(types.map((componentType,index)=>({...emptyRow(index+1),componentType,description:componentType==="frame"?"Montura":componentType==="lens"?"Lunas":componentType==="treatment"?"Tratamiento":""})));
   const addRow=()=>setRows(cur=>[...cur,emptyRow(Math.max(...cur.map(r=>r.id),0)+1)]);
+  const addBlock=()=>setRows(cur=>{
+    const base=Math.max(...cur.map(r=>r.id),0);
+    return [...cur,emptyRow(base+1),emptyRow(base+2),emptyRow(base+3)];
+  });
   const removeRow=(id:number)=>setRows(cur=>cur.length===1?cur:cur.filter(row=>row.id!==id));
   const total=rows.reduce((sum,row)=>sum+Math.max(Number(row.quantity||0)*Number(row.price||0)-Number(row.discount||0),0),0);
 
@@ -65,6 +69,10 @@ export function SaleBuilder({products,showCostField,allowPriceOverride}:{product
     <datalist id="sale-products">{products.map(p=><option key={p.id} value={p.product_code}>{[p.brand,p.model,p.description].filter(Boolean).join(" ")} · S/ {Number(p.sale_price).toFixed(2)} · stock {p.inventory_mode==="stock"?p.stock_qty:"no aplica"}</option>)}</datalist>
     <input type="hidden" name="item_count" value={rows.length}/>
     <div className="sale-summary" style={{marginTop:14}}><div><strong>{rows.length}</strong> {rows.length===1?"línea":"líneas"} de venta</div><div><span className="muted">Subtotal</span><strong>S/ {total.toFixed(2)}</strong></div></div>
-    <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}><button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar otra línea</button><button type="submit" className="btn btn-primary">Registrar venta</button></div>
+    <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
+      <button type="button" className="btn btn-secondary" onClick={addBlock}>+ Agregar 3 líneas</button>
+      <button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar 1 línea</button>
+      <button type="submit" className="btn btn-primary">Registrar venta</button>
+    </div>
   </div>;
 }
