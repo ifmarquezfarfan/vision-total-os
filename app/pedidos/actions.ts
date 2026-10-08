@@ -36,28 +36,34 @@ export async function createOrder(formData:FormData){
   const promisedAtRaw=String(formData.get("promised_at")??"").trim();
   const adaptationRaw=String(formData.get("adaptation_followup_at")??"").trim();
   const notes=String(formData.get("notes")??"").trim();
+  const measureNumber=(name:string)=>{const raw=String(formData.get(name)??"").trim();if(!raw)return null;const value=Number(raw);return Number.isFinite(value)?value:null;};
+  const measureText=(name:string)=>String(formData.get(name)??"").trim()||null;
+  const measurementNumberNames=["pd_binocular","pd_od","pd_os","pd_near_binocular","pd_near_od","pd_near_os","height_od","height_os","working_distance_cm","vertex","pantoscopic","wrap","frame_a","frame_b","frame_ed","frame_dbl","frame_temple","frame_front_width"];
+  if(measurementNumberNames.some((name)=>String(formData.get(name)??"").trim()!==""&&!Number.isFinite(Number(formData.get(name))))) redirect("/pedidos?error=Hay%20una%20medida%20numérica%20inválida");
+  const pdMeasures=["pd_binocular","pd_od","pd_os","pd_near_binocular","pd_near_od","pd_near_os"].map(measureNumber).filter((value):value is number=>value!==null);
+  if(pdMeasures.some((value)=>value<=0||value>100)) redirect("/pedidos?error=Revisa%20las%20distancias%20pupilares");
   const measurements={
-    pd_binocular:String(formData.get("pd_binocular")??"").trim()||null,
-    pd_od:String(formData.get("pd_od")??"").trim()||null,
-    pd_os:String(formData.get("pd_os")??"").trim()||null,
-    pd_near_binocular:String(formData.get("pd_near_binocular")??"").trim()||null,
-    pd_near_od:String(formData.get("pd_near_od")??"").trim()||null,
-    pd_near_os:String(formData.get("pd_near_os")??"").trim()||null,
-    height_od:String(formData.get("height_od")??"").trim()||null,
-    height_os:String(formData.get("height_os")??"").trim()||null,
-    working_distance_cm:String(formData.get("working_distance_cm")??"").trim()||null,
-    vertex:String(formData.get("vertex")??"").trim()||null,
-    pantoscopic:String(formData.get("pantoscopic")??"").trim()||null,
-    wrap:String(formData.get("wrap")??"").trim()||null,
-    frame_a:String(formData.get("frame_a")??"").trim()||null,
-    frame_b:String(formData.get("frame_b")??"").trim()||null,
-    frame_ed:String(formData.get("frame_ed")??"").trim()||null,
-    frame_dbl:String(formData.get("frame_dbl")??"").trim()||null,
-    frame_temple:String(formData.get("frame_temple")??"").trim()||null,
-    frame_front_width:String(formData.get("frame_front_width")??"").trim()||null,
-    mounting_type:String(formData.get("mounting_type")??"").trim()||null,
-    frame_reference:String(formData.get("frame_reference")??"").trim()||null,
-    measurement_notes:String(formData.get("measurement_notes")??"").trim()||null
+    pd_binocular:measureNumber("pd_binocular"),
+    pd_od:measureNumber("pd_od"),
+    pd_os:measureNumber("pd_os"),
+    pd_near_binocular:measureNumber("pd_near_binocular"),
+    pd_near_od:measureNumber("pd_near_od"),
+    pd_near_os:measureNumber("pd_near_os"),
+    height_od:measureNumber("height_od"),
+    height_os:measureNumber("height_os"),
+    working_distance_cm:measureNumber("working_distance_cm"),
+    vertex:measureNumber("vertex"),
+    pantoscopic:measureNumber("pantoscopic"),
+    wrap:measureNumber("wrap"),
+    frame_a:measureNumber("frame_a"),
+    frame_b:measureNumber("frame_b"),
+    frame_ed:measureNumber("frame_ed"),
+    frame_dbl:measureNumber("frame_dbl"),
+    frame_temple:measureNumber("frame_temple"),
+    frame_front_width:measureNumber("frame_front_width"),
+    mounting_type:measureText("mounting_type"),
+    frame_reference:measureText("frame_reference"),
+    measurement_notes:measureText("measurement_notes")
   };
 
   if(!clientId) redirect("/pedidos?error=El%20cliente%20es%20obligatorio");
