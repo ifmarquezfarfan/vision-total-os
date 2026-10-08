@@ -49,7 +49,7 @@ export function SaleBuilder({products,showCostField,allowPriceOverride}:{product
         <thead><tr><th>Producto</th><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>Precio</th>{showCostField&&<th>Costo</th>}<th>Desc.</th><th></th></tr></thead>
         <tbody>{rows.map((row,index)=>{
           const selected=row.productId?productMap.get(row.productId):null;
-          return <Fragment key={row.id+"group"}>{index%3===0&&<tr><td colSpan={showCostField?8:7} className="sale-block-label">Paquete {Math.floor(index/3)+1} · {index===0?"Primera operación":"Par adicional"}</td></tr>}</Fragment><tr key={row.id}>
+          return <Fragment key={row.id}>{index%3===0&&<tr><td colSpan={showCostField?8:7} className="sale-block-label">Paquete {Math.floor(index/3)+1} · {index===0?"Primera operación":"Par adicional"}</td></tr>}<tr>
             <td style={{minWidth:280}}>
               <input list="sale-products" value={row.productText} onChange={e=>selectProduct(row.id,e.target.value)} placeholder="Buscar por código" autoComplete="off"/>
               <input type="hidden" name={`product_${index+1}`} value={row.productId}/>
@@ -62,7 +62,7 @@ export function SaleBuilder({products,showCostField,allowPriceOverride}:{product
             {showCostField&&<td><input name={`cost_${index+1}`} type="number" min="0" step="0.01" value={row.cost} readOnly={Boolean(selected)} onChange={e=>updateRow(row.id,{cost:e.target.value})}/></td>}
             <td><input name={`discount_${index+1}`} type="number" min="0" step="0.01" value={row.discount} onChange={e=>updateRow(row.id,{discount:e.target.value})}/></td>
             <td><button type="button" className="btn btn-secondary" onClick={()=>removeRow(row.id)}>Quitar</button></td>
-          </tr></> 
+          </tr></Fragment>
         })}</tbody>
       </table>
     </div>
