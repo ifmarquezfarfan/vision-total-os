@@ -126,7 +126,7 @@ export default async function SalesPage({
                   </div>
                   <span className="muted">Sucursal actual: 1</span>
                 </div>
-                <SaleBuilder products={products ?? []} showCostField={showCostField} />
+                <SaleBuilder products={products ?? []} showCostField={showCostField} allowPriceOverride={showCostField} />
               </div>
 
               <div className="notice" style={{ marginTop: 16 }}>
