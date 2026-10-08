@@ -41,10 +41,7 @@ export async function createClientRecord(formData: FormData) {
   if (!fullName) redirect("/clientes?error=El%20nombre%20es%20obligatorio");
 
   const { supabase, organizationId, branchId } = await getContext();
-  const code = "CLI-" + Date.now().toString().slice(-8);
-
   const { error } = await supabase.from("clients").insert({
-    client_code: code,
     full_name: fullName,
     dni: dni || null,
     phone: phone || null,
@@ -91,4 +88,31 @@ export async function updateClientRecord(formData: FormData) {
 
   if (error) redirect("/clientes/" + encodeURIComponent(id) + "?error=No%20se%20pudo%20actualizar%20el%20cliente");
   redirect("/clientes/" + encodeURIComponent(id) + "?updated=1");
+}
+
+export async function deleteClientRecord(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect("/clientes?error=Cliente%20inválido");
+
+  const { supabase, organizationId, branchId } = await getContext();
+
+  const [{ count: salesCount }, { count: leadsCount }, { count: followupsCount }, { count: ordersCount }, { count: prescriptionsCount }] = await Promise.all([
+    supabase.from("sales").select("id", { count: "exact", head: true }).eq("client_id", id).eq("organization_id", organizationId).eq("branch_id", branchId),
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("client_id", id).eq("organization_id", organizationId).eq("branch_id", branchId),
+    supabase.from("follow_ups").select("id", { count: "exact", head: true }).eq("client_id", id).eq("organization_id", organizationId).eq("branch_id", branchId),
+    supabase.from("optical_orders").select("id", { count: "exact", head: true }).eq("client_id", id).eq("organization_id", organizationId).eq("branch_id", branchId),
+    supabase.from("prescriptions").select("id", { count: "exact", head: true }).eq("client_id", id).eq("organization_id", organizationId).eq("branch_id", branchId),
+  ]);
+
+  const hasHistory = [salesCount, leadsCount, followupsCount, ordersCount, prescriptionsCount].some((count) => Number(count || 0) > 0);
+
+  if (hasHistory) {
+    const { error } = await supabase.from("clients").update({ status: "inactive" }).eq("id", id).eq("organization_id", organizationId).eq("branch_id", branchId);
+    if (error) redirect("/clientes?error=No%20se%20pudo%20desactivar%20el%20cliente");
+    redirect("/clientes?archived=1");
+  }
+
+  const { error } = await supabase.from("clients").delete().eq("id", id).eq("organization_id", organizationId).eq("branch_id", branchId);
+  if (error) redirect("/clientes?error=No%20se%20pudo%20eliminar%20el%20cliente");
+  redirect("/clientes?deleted=1");
 }
