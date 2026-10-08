@@ -22,25 +22,34 @@ export async function createSale(formData: FormData) {
   const saleDiscount = Number(formData.get("sale_discount") ?? 0);
   const responsible = String(formData.get("responsible") ?? "").trim();
 
+  const requestedCount = Number(formData.get("item_count") ?? 0);
+  const itemCount = Number.isFinite(requestedCount) ? Math.min(Math.max(Math.trunc(requestedCount), 1), 50) : 1;
   const items = [];
-  for (let i=1;i<=5;i++) {
+
+  for (let i = 1; i <= itemCount; i++) {
     const productId = String(formData.get(`product_${i}`) ?? "");
     const componentType = String(formData.get(`component_${i}`) ?? "other");
     const description = String(formData.get(`description_${i}`) ?? "").trim();
-    const quantity = Number(formData.get(`quantity_${i}`) ?? 0);
+    const quantityRaw = Number(formData.get(`quantity_${i}`) ?? 1);
     const unitPriceRaw = String(formData.get(`price_${i}`) ?? "").trim();
     const unitCostRaw = String(formData.get(`cost_${i}`) ?? "").trim();
-    const discount = Number(formData.get(`discount_${i}`) ?? 0);
+    const discountRaw = Number(formData.get(`discount_${i}`) ?? 0);
 
     if (!productId && !description && !unitPriceRaw) continue;
+
+    const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+    const unitPrice = unitPriceRaw ? Number(unitPriceRaw) : 0;
+    const unitCost = unitCostRaw ? Number(unitCostRaw) : 0;
+    const discount = Number.isFinite(discountRaw) && discountRaw >= 0 ? discountRaw : 0;
+
     items.push({
       product_id: productId || null,
       component_type: componentType,
       description: description || undefined,
-      quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
-      unit_price: unitPriceRaw ? Number(unitPriceRaw) : 0,
-      unit_cost: unitCostRaw ? Number(unitCostRaw) : 0,
-      discount: Number.isFinite(discount) && discount >= 0 ? discount : 0
+      quantity,
+      unit_price: unitPrice,
+      unit_cost: unitCost,
+      discount
     });
   }
 
