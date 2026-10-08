@@ -108,3 +108,113 @@ export async function importClientsFile(formData: FormData) {
 
   redirect("/importacion?imported=" + encodeURIComponent(String(payload.length)));
 }
+
+
+function parseOptionalDate(value: string) {
+  const raw = value.trim();
+  if (!raw) return "";
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
+
+function numberValue(value: string) {
+  const normalized = value.replace(",", ".").trim();
+  if (!normalized) return 0;
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function booleanValue(value: string) {
+  return ["true", "1", "si", "sí", "yes", "x", "sí"].includes(value.trim().toLowerCase());
+}
+
+export async function importInventoryFile(formData: FormData) {
+  const file = formData.get("inventory_file");
+  if (!(file instanceof File)) redirect("/importacion?error=Adjunta%20un%20archivo%20de%20inventario");
+  if (file.size > 5_000_000) redirect("/importacion?error=El%20archivo%20supera%205MB");
+
+  const { supabase, organizationId, branchId } = await getContext();
+
+  let rows: Record<string, string>[] = [];
+  try {
+    rows = parseFile(await file.arrayBuffer(), file.name);
+  } catch {
+    redirect("/importacion?error=No%20se%20pudo%20leer%20el%20inventario");
+  }
+
+  const get = (row: Record<string, string>, ...names: string[]) => {
+    for (const name of names) {
+      const value = row[key(name)] ?? "";
+      if (value.trim()) return value.trim();
+    }
+    return "";
+  };
+
+  const clean = rows.slice(0, 1000).filter((row) =>
+    get(row, "id_del_articulo", "id_articulo", "codigo", "codigo_producto", "product_code") ||
+    get(row, "marca", "brand") ||
+    get(row, "modelo_referencia", "modelo", "model")
+  );
+
+  if (!clean.length) redirect("/importacion?error=No%20se%20encontraron%20filas%20válidas%20de%20inventario");
+
+  const { data: existing } = await supabase
+    .from("products")
+    .select("product_code")
+    .eq("organization_id", organizationId)
+    .limit(5000);
+
+  const existingCodes = new Set((existing ?? []).map((item) => String(item.product_code).trim()).filter(Boolean));
+  const seenCodes = new Set<string>();
+
+  const payload = clean.flatMap((row) => {
+    const rawCode = get(row, "id_del_articulo", "id_articulo", "codigo", "codigo_producto", "product_code");
+    const code = rawCode && !seenCodes.has(rawCode) && !existingCodes.has(rawCode) ? rawCode : "";
+    if (rawCode) seenCodes.add(rawCode);
+
+    const rawCategory = get(row, "tipo_de_producto", "tipo_producto", "categoria", "category");
+    const category =
+      /montura|armaz/i.test(rawCategory) ? "Montura" :
+      /luna|lente/i.test(rawCategory) ? "Lentes" :
+      /tratamiento/i.test(rawCategory) ? "Tratamiento" :
+      /accesorio/i.test(rawCategory) ? "Accesorio" :
+      /servicio/i.test(rawCategory) ? "Servicio" : (rawCategory || "Montura");
+
+    return [{
+      product_code: code,
+      brand: get(row, "marca", "brand"),
+      model: get(row, "modelo_referencia", "modelo", "referencia", "model"),
+      category,
+      description: get(row, "descripcion", "description"),
+      color: get(row, "color"),
+      material: get(row, "material"),
+      cost: numberValue(get(row, "precio_de_costo", "costo", "cost")),
+      sale_price: numberValue(get(row, "precio_de_venta_actual", "precio_venta", "sale_price", "precio")),
+      quantity: Math.max(0, Math.floor(numberValue(get(row, "unidades", "stock", "cantidad")))),
+      min_stock: Math.max(0, Math.floor(numberValue(get(row, "stock_minimo", "min_stock")))),
+      legacy_location: get(row, "ubicacion_actual", "ubicacion", "location"),
+      displayed: booleanValue(get(row, "exhibida", "exhibido", "displayed")),
+      physical_status: get(row, "estado_fisico", "estado") || "Bueno",
+      notes: get(row, "observaciones", "notas", "notes"),
+      entry_at: parseOptionalDate(get(row, "fecha_de_ingreso", "fecha_ingreso", "entry_at"))
+    }];
+  });
+
+  const deduped = payload.filter((row, index) => {
+    const code = row.product_code;
+    return !code || payload.findIndex((candidate) => candidate.product_code === code) === index;
+  });
+
+  if (!deduped.length) redirect("/importacion?error=No%20hay%20artículos%20nuevos%20para%20importar");
+
+  const { data, error } = await supabase.rpc("import_inventory_transaction", {
+    target_org: organizationId,
+    target_branch: branchId,
+    rows: deduped
+  });
+
+  if (error) redirect("/importacion?error=" + encodeURIComponent(error.message || "No se pudo importar el inventario"));
+
+  const result = typeof data === "object" && data ? data as { imported?: number; skipped?: number } : {};
+  redirect("/importacion?inventory_imported=" + encodeURIComponent(String(result.imported ?? deduped.length)) + "&inventory_skipped=" + encodeURIComponent(String(result.skipped ?? 0)));
+}
