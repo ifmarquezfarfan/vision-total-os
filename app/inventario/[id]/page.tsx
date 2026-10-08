@@ -51,7 +51,7 @@ export default async function ProductDetailPage({
   {product.photo_url?<img src={product.photo_url} alt={[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}/>:<div className="photo-empty-large"><span>Sin foto</span><small>Sube una imagen en la ficha del producto.</small></div>}
   <div><div className="eyebrow">Vista del producto</div><h2>{[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}</h2><p className="muted">{product.color||"Color no registrado"} · {product.material||"Material no registrado"}</p></div>
 </section>
-{q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>
+{q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>}
       {q.updated&&<p className="notice" style={{marginTop:18}}>Producto actualizado.</p>}
 
       <section className="grid grid-4 section">
