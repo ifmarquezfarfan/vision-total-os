@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { updateProduct } from "./actions";
 import { QuickStart } from "@/components/quick-start";
+import { LensProductFields } from "@/components/lens-product-fields";
 
 export default async function ProductDetailPage({
   params,
@@ -23,7 +24,7 @@ export default async function ProductDetailPage({
   if (!membership || !branch) redirect("/onboarding");
 
   const [{ data: product }, { data: stockRows }, { data: locations }, { data: movements }] = await Promise.all([
-    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
+    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,lens_design,lens_material,lens_index,lens_phi_mm,lens_coatings,lens_prism_capable,lens_sphere_min,lens_sphere_max,lens_cylinder_min,lens_cylinder_max,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
     supabase.from("inventory_stock").select("location_id,quantity").eq("product_id",id).limit(100),
     supabase.from("inventory_locations").select("id,name").eq("branch_id",branch.branch_id).eq("active",true).order("created_at"),
     supabase.from("inventory_movements").select("id,quantity,movement_type,note,created_at").eq("product_id",id).eq("branch_id",branch.branch_id).order("created_at",{ascending:false}).limit(30),
@@ -76,6 +77,7 @@ export default async function ProductDetailPage({
             <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date" defaultValue={product.entry_at?new Date(product.entry_at).toISOString().slice(0,10):""}/></div>
           </div>
           <label className="checkline"><input type="checkbox" name="displayed" defaultChecked={product.displayed}/> Está exhibida</label>
+          <LensProductFields values={product}/>
           <div className="field"><label>Observaciones</label><input name="notes" defaultValue={product.notes||""}/></div>
           <button className="btn btn-primary">Guardar cambios</button>
         </form>
