@@ -31,7 +31,7 @@ const example = [
   "Cliente: Andrea López, nueva compradora.",
   "Cotización: Montura + lunas 1.56 + antirreflejo.",
   "Venta: 1 paquete, adelanto registrado.",
-  "Pedido óptico: se vincula la venta, receta, montura, diseño, material, tratamientos, medidas y laboratorio.",
+  "Pedido óptico: vincula venta, receta de lejos/cerca, prisma y base, DP binocular/monocular, alturas, ajuste de montura, diseño/material/índice/PHI, recubrimientos y laboratorio.",
   "QC: revisión aprobada. Luego se marca aviso de recojo y, finalmente, entrega.",
   "Seguimiento: se agenda adaptación y un futuro control.",
   "Resultado: la venta no termina en el pago. Deja producto, pedido, cliente, agenda y trazabilidad."
