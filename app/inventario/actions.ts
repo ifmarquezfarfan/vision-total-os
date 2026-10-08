@@ -28,13 +28,6 @@ export async function createProduct(formData:FormData){
   const entryAtRaw=String(formData.get("entry_at")??"").trim();
   const notes=String(formData.get("notes")??"").trim();
   const inventoryMode=String(formData.get("inventory_mode")??"stock").trim();
-  const photo=formData.get("photo");
-  if(photo instanceof File && photo.size>0){
-    if(photo.size>5*1024*1024 || !["image/jpeg","image/png","image/webp"].includes(photo.type)){
-      redirect("/inventario?error=La%20foto%20debe%20ser%20JPG%2C%20PNG%20o%20WEBP%20y%20menor%20a%205%20MB");
-    }
-  }
-
   if(!brand&&!model&&!description) redirect("/inventario?error=Ingresa%20al%20menos%20marca%2C%20modelo%20o%20descripción");
   if(!["stock","on_demand","service"].includes(inventoryMode)) redirect("/inventario?error=Modo%20de%20inventario%20inválido");
 
@@ -63,14 +56,6 @@ export async function createProduct(formData:FormData){
     if(movementError) redirect("/inventario?error=Producto%20creado%2C%20pero%20no%20se%20pudo%20registrar%20el%20stock%20inicial");
   }
 
-  if(photo instanceof File && photo.size>0){
-    const extension=photo.type==="image/png"?"png":photo.type==="image/webp"?"webp":"jpg";
-    const path=`${organizationId}/${product.id}/${crypto.randomUUID()}.${extension}`;
-    const {error:uploadError}=await supabase.storage.from("product-images").upload(path,photo,{contentType:photo.type,upsert:false});
-    if(uploadError) redirect("/inventario?created=1&error=La%20foto%20no%20pudo%20subirse");
-    const {data:publicData}=supabase.storage.from("product-images").getPublicUrl(path);
-    await supabase.from("products").update({photo_url:publicData.publicUrl}).eq("id",product.id).eq("organization_id",organizationId).eq("branch_id",branchId);
-  }
 
   redirect("/inventario?created=1");
 }
