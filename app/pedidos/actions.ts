@@ -3,17 +3,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-async function getContext() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
-  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
-  if (!membership||!branch) redirect("/onboarding");
+async function getContext(){
+  const supabase=await createClient();
+  const {data:{user}}=await supabase.auth.getUser();
+  if(!user) redirect("/login");
+  const {data:membership}=await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  const {data:branch}=await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  if(!membership||!branch) redirect("/onboarding");
   return {supabase,userId:user.id,organizationId:membership.organization_id,branchId:branch.branch_id};
 }
 
-export async function createOrder(formData: FormData) {
+export async function createOrder(formData:FormData){
   const {supabase,organizationId,branchId}=await getContext();
   const clientId=String(formData.get("client_id")??"")||null;
   const saleId=String(formData.get("sale_id")??"")||null;
@@ -49,40 +49,33 @@ export async function createOrder(formData: FormData) {
   if(!clientId) redirect("/pedidos?error=El%20cliente%20es%20obligatorio");
   if(!["received","in_preparation","at_lab","ready"].includes(status)) redirect("/pedidos?error=Estado%20inválido");
 
-  if (saleId) {
-    const { data: sale } = await supabase.from("sales").select("id,client_id,organization_id,branch_id").eq("id",saleId).maybeSingle();
-    if (!sale || sale.organization_id !== organizationId || sale.branch_id !== branchId || sale.client_id !== clientId) {
-      redirect("/pedidos?error=La%20venta%20y%20el%20cliente%20no%20coinciden");
-    }
+  if(saleId){
+    const {data:sale}=await supabase.from("sales").select("id,client_id,organization_id,branch_id").eq("id",saleId).maybeSingle();
+    if(!sale||sale.organization_id!==organizationId||sale.branch_id!==branchId||sale.client_id!==clientId) redirect("/pedidos?error=La%20venta%20y%20el%20cliente%20no%20coinciden");
   }
-
-  if (prescriptionId) {
-    const { data: prescription } = await supabase.from("prescriptions").select("id,client_id,organization_id,branch_id").eq("id",prescriptionId).maybeSingle();
-    if (!prescription || prescription.organization_id !== organizationId || prescription.branch_id !== branchId || prescription.client_id !== clientId) {
-      redirect("/pedidos?error=La%20receta%20no%20pertenece%20al%20cliente%20seleccionado");
-    }
+  if(prescriptionId){
+    const {data:prescription}=await supabase.from("prescriptions").select("id,client_id,organization_id,branch_id").eq("id",prescriptionId).maybeSingle();
+    if(!prescription||prescription.organization_id!==organizationId||prescription.branch_id!==branchId||prescription.client_id!==clientId) redirect("/pedidos?error=La%20receta%20no%20pertenece%20al%20cliente%20seleccionado");
   }
-
-  if (frameProductId) {
-    const { data: frame } = await supabase.from("products").select("id,category,organization_id,branch_id").eq("id",frameProductId).maybeSingle();
-    if (!frame || frame.organization_id !== organizationId || frame.branch_id !== branchId || frame.category !== "Montura") {
-      redirect("/pedidos?error=La%20montura%20seleccionada%20no%20es%20válida");
-    }
+  if(frameProductId){
+    const {data:frame}=await supabase.from("products").select("id,category,organization_id,branch_id").eq("id",frameProductId).maybeSingle();
+    if(!frame||frame.organization_id!==organizationId||frame.branch_id!==branchId||frame.category!=="Montura") redirect("/pedidos?error=La%20montura%20seleccionada%20no%20es%20válida");
   }
 
   const code="PED-"+Date.now().toString().slice(-8);
   const {data:createdOrder,error}=await supabase.from("optical_orders").insert({
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
-    status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,treatments:treatments||null,measurements,
+    status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,
+    lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,treatments:treatments||null,measurements,
     promised_at:promisedAtRaw?new Date(promisedAtRaw).toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     notes:notes||null,organization_id:organizationId,branch_id:branchId
   }).select("id,order_code").single();
-  if(error || !createdOrder) redirect("/pedidos?error=No%20se%20pudo%20crear%20el%20pedido");
-  redirect("/pedidos/"+encodeURIComponent(createdOrder.id)+"?created=1");
+  if(error||!createdOrder) redirect("/pedidos?error=No%20se%20pudo%20crear%20el%20pedido");
+  redirect("/pedidos/"+createdOrder.id+"?created=1");
 }
 
-export async function updateOrderOperational(formData: FormData) {
+export async function updateOrderOperational(formData:FormData){
   const orderId=String(formData.get("order_id")??"");
   const status=String(formData.get("status")??"received");
   const qcStatus=String(formData.get("qc_status")??"pending");
@@ -90,21 +83,14 @@ export async function updateOrderOperational(formData: FormData) {
   const pickupNotified=formData.get("pickup_notified")==="on";
   const adaptationRaw=String(formData.get("adaptation_followup_at")??"").trim();
   const deliveryNotes=String(formData.get("delivery_notes")??"").trim();
-
   if(!orderId||!["received","in_preparation","at_lab","ready","delivered","cancelled"].includes(status)||!["pending","approved","rework"].includes(qcStatus)) redirect("/pedidos?error=Datos%20inválidos");
 
   const {supabase}=await getContext();
-
-  const { data: currentOrder } = await supabase
-    .from("optical_orders")
-    .select("id,status,qc_status")
-    .eq("id",orderId)
-    .maybeSingle();
-
-  if (!currentOrder) redirect("/pedidos?error=Pedido%20no%20encontrado");
-  if (status==="delivered" && qcStatus!=="approved") redirect("/pedidos?error=No%20puedes%20entregar%20un%20pedido%20sin%20QC%20aprobado");
-  if (status==="ready" && qcStatus==="rework") redirect("/pedidos?error=Un%20pedido%20para%20revisión%20no%20puede%20marcarse%20como%20listo");
-  if (status==="delivered" && !pickupNotified) redirect("/pedidos?error=Marca%20que%20el%20cliente%20fue%20avisado%20antes%20de%20entregar");
+  const {data:currentOrder}=await supabase.from("optical_orders").select("id,status,qc_status").eq("id",orderId).maybeSingle();
+  if(!currentOrder) redirect("/pedidos?error=Pedido%20no%20encontrado");
+  if(status==="delivered"&&qcStatus!=="approved") redirect("/pedidos?error=No%20puedes%20entregar%20un%20pedido%20sin%20QC%20aprobado");
+  if(status==="ready"&&qcStatus==="rework") redirect("/pedidos?error=Un%20pedido%20para%20revisión%20no%20puede%20marcarse%20como%20listo");
+  if(status==="delivered"&&!pickupNotified) redirect("/pedidos?error=Marca%20que%20el%20cliente%20fue%20avisado%20antes%20de%20entregar");
 
   const {error}=await supabase.from("optical_orders").update({
     status,qc_status:qcStatus,lab_reference:labReference||null,
@@ -114,6 +100,6 @@ export async function updateOrderOperational(formData: FormData) {
     delivery_notes:deliveryNotes||null
   }).eq("id",orderId);
 
-  if(error) redirect("/pedidos?error=No%20se%20pudo%20actualizar%20el%20pedido");
-  redirect("/pedidos/"+encodeURIComponent(orderId)+"?updated=1");
+  if(error) redirect("/pedidos/"+orderId+"?error=No%20se%20pudo%20actualizar%20el%20pedido");
+  redirect("/pedidos/"+orderId+"?updated=1");
 }
