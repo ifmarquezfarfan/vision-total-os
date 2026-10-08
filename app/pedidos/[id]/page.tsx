@@ -12,11 +12,12 @@ export default async function OrderDetailPage({params,searchParams}:{params:Prom
   const {data:order}=await supabase.from("optical_orders").select("id,order_code,client_id,sale_id,prescription_id,frame_product_id,status,lab,lab_reference,lens_type,lens_design,lens_material,lens_index,lens_brand,treatments,measurements,promised_at,delivered_at,qc_status,pickup_notified_at,delivery_notes,adaptation_followup_at,notes,created_at").eq("id",id).maybeSingle();
   if(!order) redirect("/pedidos?error=Pedido%20no%20encontrado");
 
-  const [{data:client},{data:prescription},{data:sale},{data:frame}]=await Promise.all([
+  const [{data:client},{data:prescription},{data:sale},{data:frame},{data:audit}]=await Promise.all([
     order.client_id?supabase.from("clients").select("full_name,dni,whatsapp,phone").eq("id",order.client_id).maybeSingle():Promise.resolve({data:null}),
     order.prescription_id?supabase.from("prescriptions").select("exam_at,expires_at,od_sphere,od_cylinder,od_axis,od_add,os_sphere,os_cylinder,os_axis,os_add,pd").eq("id",order.prescription_id).maybeSingle():Promise.resolve({data:null}),
     order.sale_id?supabase.from("sales").select("sale_code,total,payment_status").eq("id",order.sale_id).maybeSingle():Promise.resolve({data:null}),
-    order.frame_product_id?supabase.from("products").select("product_code,brand,model,cost,sale_price").eq("id",order.frame_product_id).maybeSingle():Promise.resolve({data:null})
+    order.frame_product_id?supabase.from("products").select("product_code,brand,model,cost,sale_price").eq("id",order.frame_product_id).maybeSingle():Promise.resolve({data:null}),
+    supabase.from("audit_log").select("id,actor_user_id,action,old_data,new_data,created_at").eq("record_id",id).eq("table_name","optical_orders").order("created_at",{ascending:false}).limit(20)
   ]);
 
   const q=await searchParams;
@@ -25,7 +26,16 @@ export default async function OrderDetailPage({params,searchParams}:{params:Prom
     <div className="spread"><div><h1 className="page-title">{order.order_code}</h1><p className="subtitle">{client?.full_name||"Cliente"} · creado {new Date(order.created_at).toLocaleDateString("es-PE")}</p></div><a className="btn btn-secondary" href="/pedidos">Volver</a></div>
     {q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>}{q.created&&<p className="notice" style={{marginTop:18}}>Pedido creado.</p>}{q.updated&&<p className="notice" style={{marginTop:18}}>Pedido actualizado.</p>}
 
-    <section className="grid grid-4 section"><div className="card"><div className="metric-label">Estado</div><div className="metric-value" style={{fontSize:20}}>{order.status}</div></div><div className="card"><div className="metric-label">QC</div><div className="metric-value" style={{fontSize:20}}>{order.qc_status}</div></div><div className="card"><div className="metric-label">Prometido</div><div className="metric-value" style={{fontSize:18}}>{order.promised_at?new Date(order.promised_at).toLocaleDateString("es-PE"):"Sin fecha"}</div></div><div className="card"><div className="metric-label">Aviso</div><div className="metric-value" style={{fontSize:18}}>{order.pickup_notified_at?"Enviado":"Pendiente"}</div></div></section>
+    {(() => {
+      const statusSteps = ["received","in_preparation","at_lab","ready","delivered"];
+      const statusLabels: Record<string,string> = {received:"Recibido",in_preparation:"En preparación",at_lab:"En laboratorio",ready:"Listo",delivered:"Entregado",cancelled:"Cancelado"};
+      const currentIndex = statusSteps.indexOf(order.status);
+      return <section className="card section"><div className="spread"><div><h2 style={{marginBottom:4}}>Seguimiento del pedido</h2><p className="muted">Una vista rápida del recorrido de este trabajo.</p></div><strong>{statusLabels[order.status]||order.status}</strong></div>
+        {order.status==="cancelled" ? <div className="notice" style={{marginTop:12}}>Este pedido está cancelado.</div> :
+          <div className="order-progress">{statusSteps.map((step,i)=><div className={"order-step "+(i<currentIndex?"done ":"")+(i===currentIndex?"current":"")} key={step}><span className="order-dot">{i<currentIndex?"✓":i+1}</span><span>{statusLabels[step]}</span></div>)}</div>}
+        <div className="mini-table" style={{marginTop:16}}>{(audit??[]).slice(0,8).map((event:any)=>{const nextStatus=event.new_data?.status; const nextQc=event.new_data?.qc_status; return <div className="mini-row" key={event.id}><span>{new Date(event.created_at).toLocaleString("es-PE")}</span><strong>{nextStatus?statusLabels[nextStatus]||nextStatus:event.action}{nextQc&&nextQc!=="pending"?" · QC "+nextQc:""}</strong></div>})}</div>
+      </section>;
+    })()}\n    <section className="grid grid-4 section"><div className="card"><div className="metric-label">Estado</div><div className="metric-value" style={{fontSize:20}}>{order.status}</div></div><div className="card"><div className="metric-label">QC</div><div className="metric-value" style={{fontSize:20}}>{order.qc_status}</div></div><div className="card"><div className="metric-label">Prometido</div><div className="metric-value" style={{fontSize:18}}>{order.promised_at?new Date(order.promised_at).toLocaleDateString("es-PE"):"Sin fecha"}</div></div><div className="card"><div className="metric-label">Aviso</div><div className="metric-value" style={{fontSize:18}}>{order.pickup_notified_at?"Enviado":"Pendiente"}</div></div></section>
 
     <section className="grid grid-3 section"><div className="card"><h2>Cliente</h2><p>{client?.full_name||"·"}</p><p className="muted">{client?.dni||""} {client?.whatsapp||client?.phone||""}</p></div><div className="card"><h2>Venta</h2><p>{sale?.sale_code||"Sin vínculo"}</p><p className="muted">{sale ? "S/ "+Number(sale.total).toFixed(2)+" · "+sale.payment_status : "·"}</p></div><div className="card"><h2>Montura</h2><p>{frame ? [frame.brand,frame.model].filter(Boolean).join(" ") : "Sin vínculo"}</p><p className="muted">{frame?.product_code||""}</p></div></section>
 
