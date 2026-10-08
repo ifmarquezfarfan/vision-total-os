@@ -40,6 +40,7 @@ export async function Sidebar() {
           <Link href="/seguimientos">Seguimientos</Link>
           <Link href="/ventas">Ventas</Link>
           <Link href="/pedidos">Pedidos ópticos</Link>
+          <Link href="/buscador-lunas">Buscador de lunas</Link>
         </div>
 
         {isAdmin && (
