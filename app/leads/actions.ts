@@ -8,21 +8,8 @@ async function getContext() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: membership } = await supabase
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .limit(1)
-    .maybeSingle();
-
-  const { data: branch } = await supabase
-    .from("branch_members")
-    .select("branch_id")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .limit(1)
-    .maybeSingle();
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
 
   if (!membership || !branch) redirect("/onboarding");
   return { supabase, organizationId: membership.organization_id, branchId: branch.branch_id };
@@ -56,4 +43,27 @@ export async function createLead(formData: FormData) {
 
   if (error) redirect("/leads?error=No%20se%20pudo%20guardar%20el%20lead");
   redirect("/leads?created=1");
+}
+
+export async function updateLeadStage(formData: FormData) {
+  const leadId = String(formData.get("lead_id") ?? "");
+  const stage = String(formData.get("stage") ?? "new");
+  if (!leadId) redirect("/leads?error=Lead%20inválido");
+
+  const allowed = ["new","contacted","interested","quoted","pending","won","lost"];
+  if (!allowed.includes(stage)) redirect("/leads?error=Etapa%20inválida");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.from("leads").update({
+    stage,
+    result: stage === "lost" ? "Oportunidad perdida" : stage === "won" ? "Oportunidad ganada" : null,
+    next_action: stage === "won" || stage === "lost" ? null : "Realizar siguiente contacto",
+    next_action_at: stage === "won" || stage === "lost" ? null : new Date(Date.now() + 3*24*60*60*1000).toISOString()
+  }).eq("id", leadId);
+
+  if (error) redirect("/leads?error=No%20se%20pudo%20actualizar%20la%20etapa");
+  redirect("/leads?updated=1");
 }

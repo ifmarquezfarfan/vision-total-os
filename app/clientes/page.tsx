@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
@@ -16,6 +17,7 @@ export default async function ClientsPage({
     .from("organization_members")
     .select("organization_id")
     .eq("user_id", user.id)
+    .eq("active", true)
     .limit(1)
     .maybeSingle();
 
@@ -23,9 +25,9 @@ export default async function ClientsPage({
 
   const { data: clients } = await supabase
     .from("clients")
-    .select("id, client_code, full_name, dni, phone, whatsapp, status, created_at")
+    .select("id, client_code, full_name, dni, phone, whatsapp, status, marketing_opt_in, created_at")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(300);
 
   const params = await searchParams;
 
@@ -35,12 +37,8 @@ export default async function ClientsPage({
       <main className="main">
         <header className="topbar"><strong>Clientes</strong><span className="muted">{user.email}</span></header>
         <div className="content">
-          <div className="spread">
-            <div>
-              <h1 className="page-title">Clientes</h1>
-              <p className="subtitle">La memoria comercial de Visión Total.</p>
-            </div>
-          </div>
+          <h1 className="page-title">Clientes</h1>
+          <p className="subtitle">La memoria comercial de Visión Total: datos, compras, seguimiento y relación posterior.</p>
 
           {params.error && <p className="notice" style={{ marginTop: 18 }}>{params.error}</p>}
           {params.created && <p className="notice" style={{ marginTop: 18 }}>Cliente registrado correctamente.</p>}
@@ -54,25 +52,28 @@ export default async function ClientsPage({
                 <div className="field"><label>Teléfono</label><input name="phone" inputMode="tel" /></div>
                 <div className="field"><label>WhatsApp</label><input name="whatsapp" inputMode="tel" /></div>
                 <div className="field"><label>Correo</label><input name="email" type="email" /></div>
+                <div className="field"><label>Distrito</label><input name="district" placeholder="Ej. Cercado" /></div>
+                <div className="field"><label>Canal preferido</label><select name="preferred_channel" defaultValue=""><option value="">Seleccionar</option><option>WhatsApp</option><option>Llamada</option><option>Instagram</option><option>Presencial</option></select></div>
               </div>
-              <div><button className="btn btn-primary">Guardar cliente</button></div>
+              <label className="checkline"><input type="checkbox" name="marketing_opt_in" /> Autoriza recibir comunicaciones comerciales y recordatorios</label>
+              <button className="btn btn-primary">Guardar cliente</button>
             </form>
           </section>
 
           <section className="section">
-            <h2>Últimos clientes</h2>
+            <h2>Cartera</h2>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>Código</th><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>WhatsApp</th><th>Estado</th></tr></thead>
+                <thead><tr><th>Código</th><th>Cliente</th><th>DNI</th><th>WhatsApp</th><th>Estado</th><th>Comunicaciones</th></tr></thead>
                 <tbody>
                   {(clients ?? []).map((client) => (
                     <tr key={client.id}>
                       <td>{client.client_code}</td>
-                      <td>{client.full_name}</td>
+                      <td><Link href={`/clientes/${client.id}`} className="link-strong">{client.full_name}</Link></td>
                       <td>{client.dni || "·"}</td>
-                      <td>{client.phone || "·"}</td>
-                      <td>{client.whatsapp || "·"}</td>
+                      <td>{client.whatsapp || client.phone || "·"}</td>
                       <td>{client.status}</td>
+                      <td>{client.marketing_opt_in ? "Autorizado" : "No autorizado"}</td>
                     </tr>
                   ))}
                   {!clients?.length && <tr><td colSpan={6} className="muted">Todavía no hay clientes registrados.</td></tr>}

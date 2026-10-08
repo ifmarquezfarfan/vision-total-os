@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 export async function createFollowUp(formData: FormData) {
   const type = String(formData.get("followup_type") ?? "").trim();
   const channel = String(formData.get("channel") ?? "").trim();
+  const clientId = String(formData.get("client_id") ?? "") || null;
+  const leadId = String(formData.get("lead_id") ?? "") || null;
   const result = String(formData.get("result") ?? "").trim();
   const nextAction = String(formData.get("next_action") ?? "").trim();
   const nextActionAt = String(formData.get("next_action_at") ?? "").trim();
@@ -17,28 +19,16 @@ export async function createFollowUp(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: membership } = await supabase
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .limit(1)
-    .maybeSingle();
-
-  const { data: branch } = await supabase
-    .from("branch_members")
-    .select("branch_id")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .limit(1)
-    .maybeSingle();
-
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
   if (!membership || !branch) redirect("/onboarding");
 
   const code = "SEG-" + Date.now().toString().slice(-8);
 
   const { error } = await supabase.from("follow_ups").insert({
     followup_code: code,
+    client_id: clientId,
+    lead_id: leadId,
     followup_type: type,
     channel: channel || null,
     result: result || null,
