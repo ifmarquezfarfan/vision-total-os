@@ -17,6 +17,7 @@ type Product = {
 type SaleRow = {
   id: number;
   productId: string;
+  productText: string;
   componentType: string;
   description: string;
   quantity: number;
@@ -35,47 +36,46 @@ const componentOptions = [
 ] as const;
 
 function emptyRow(id: number): SaleRow {
-  return {
-    id,
-    productId: "",
-    componentType: "other",
-    description: "",
-    quantity: 1,
-    price: "",
-    cost: "",
-    discount: "0",
-  };
+  return { id, productId: "", productText: "", componentType: "other", description: "", quantity: 1, price: "", cost: "", discount: "0" };
 }
 
 export function SaleBuilder({
   products,
   showCostField,
+  allowPriceOverride,
 }: {
   products: Product[];
   showCostField: boolean;
+  allowPriceOverride: boolean;
 }) {
   const [rows, setRows] = useState<SaleRow[]>([emptyRow(1)]);
 
   const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const codeMap = useMemo(() => new Map(products.map((p) => [p.product_code.toLowerCase(), p])), [products]);
 
   const updateRow = (id: number, patch: Partial<SaleRow>) => {
     setRows((current) => current.map((row) => row.id === id ? { ...row, ...patch } : row));
   };
 
-  const selectProduct = (id: number, productId: string) => {
-    const product = productMap.get(productId);
+  const selectProduct = (id: number, text: string) => {
+    const product = codeMap.get(text.trim().toLowerCase());
+    if (!product) {
+      updateRow(id, { productId: "", productText: text });
+      return;
+    }
+
+    const componentType =
+      product.category === "Montura" ? "frame" :
+      product.category === "Lentes" ? "lens" :
+      product.category === "Tratamiento" ? "treatment" : "other";
+
     updateRow(id, {
-      productId,
-      description: product?.description || [product?.brand, product?.model].filter(Boolean).join(" "),
-      componentType: product?.category === "Montura"
-        ? "frame"
-        : product?.category === "Lentes"
-        ? "lens"
-        : product?.category === "Tratamiento"
-        ? "treatment"
-        : "other",
-      price: product ? Number(product.sale_price || 0).toFixed(2) : "",
-      cost: product ? Number(product.cost || 0).toFixed(2) : "",
+      productId: product.id,
+      productText: product.product_code,
+      description: product.description || [product.brand, product.model].filter(Boolean).join(" "),
+      componentType,
+      price: Number(product.sale_price || 0).toFixed(2),
+      cost: Number(product.cost || 0).toFixed(2),
     });
   };
 
@@ -94,75 +94,53 @@ export function SaleBuilder({
     return sum + Math.max(qty * price - discount, 0);
   }, 0);
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    for (const row of rows) {
+      const product = row.productId ? productMap.get(row.productId) : null;
+      if (product && row.quantity > product.stock_qty) {
+        event.preventDefault();
+        window.alert(`Stock insuficiente para ${product.product_code}. Disponible: ${product.stock_qty}.`);
+        return;
+      }
+    }
+  };
+
   return (
     <div>
       <div className="notice" style={{ marginBottom: 14 }}>
-        Agrega tantos componentes como necesites. Una venta puede tener montura, lunas, tratamientos, accesorios y servicios sin límite práctico de 5 líneas.
+        Construye la venta por componentes. Puedes agregar todos los productos, servicios o trabajos necesarios para un mismo cliente.
       </div>
 
       <div className="table-wrap">
-        <table style={{ minWidth: showCostField ? 1280 : 1120 }}>
+        <table style={{ minWidth: showCostField ? 1280 : 1040 }}>
           <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Tipo</th>
-              <th>Descripción</th>
-              <th>Cant.</th>
-              <th>Precio</th>
-              {showCostField && <th>Costo interno</th>}
-              <th>Desc.</th>
-              <th></th>
-            </tr>
+            <tr><th>Producto</th><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>Precio</th>{showCostField && <th>Costo</th>}<th>Desc.</th><th></th></tr>
           </thead>
           <tbody>
             {rows.map((row, index) => {
               const selected = row.productId ? productMap.get(row.productId) : null;
               return (
                 <tr key={row.id}>
-                  <td>
-                    <select
-                      name={`product_${index + 1}`}
-                      value={row.productId}
+                  <td style={{ minWidth: 270 }}>
+                    <input
+                      list="sale-products"
+                      value={row.productText}
                       onChange={(e) => selectProduct(row.id, e.target.value)}
-                    >
-                      <option value="">Componente personalizado</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.product_code} · {[product.brand, product.model].filter(Boolean).join(" ")}
-                          {selected?.id === product.id ? "" : ` · S/ ${Number(product.sale_price).toFixed(2)} · stock ${product.stock_qty}`}
-                        </option>
-                      ))}
+                      placeholder="Buscar por código"
+                      autoComplete="off"
+                    />
+                    <input type="hidden" name={`product_${index + 1}`} value={row.productId} />
+                    {selected ? <span className="field-hint">Stock {selected.stock_qty} · S/ {Number(selected.sale_price).toFixed(2)}</span> : <span className="field-hint">Personalizado, sin movimiento de stock</span>}
+                  </td>
+                  <td>
+                    <select name={`component_${index + 1}`} value={row.componentType} onChange={(e) => updateRow(row.id,{componentType:e.target.value})}>
+                      {componentOptions.map(([value,label]) => <option key={value} value={value}>{label}</option>)}
                     </select>
                   </td>
                   <td>
-                    <select
-                      name={`component_${index + 1}`}
-                      value={row.componentType}
-                      onChange={(e) => updateRow(row.id, { componentType: e.target.value })}
-                    >
-                      {componentOptions.map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
+                    <input name={`description_${index + 1}`} value={row.description} onChange={(e) => updateRow(row.id,{description:e.target.value})} placeholder={row.componentType === "lens" ? "Ej. Monofocal 1.56 antirreflejo" : "Descripción"} />
                   </td>
-                  <td>
-                    <input
-                      name={`description_${index + 1}`}
-                      value={row.description}
-                      onChange={(e) => updateRow(row.id, { description: e.target.value })}
-                      placeholder={row.componentType === "lens" ? "Ej. Monofocal 1.56 antirreflejo" : "Descripción"}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      name={`quantity_${index + 1}`}
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={row.quantity}
-                      onChange={(e) => updateRow(row.id, { quantity: Math.max(1, Number(e.target.value || 1)) })}
-                    />
-                  </td>
+                  <td><input name={`quantity_${index + 1}`} type="number" min="1" step="1" value={row.quantity} onChange={(e)=>updateRow(row.id,{quantity:Math.max(1,Number(e.target.value||1))})}/></td>
                   <td>
                     <input
                       name={`price_${index + 1}`}
@@ -170,38 +148,14 @@ export function SaleBuilder({
                       min="0"
                       step="0.01"
                       value={row.price}
-                      onChange={(e) => updateRow(row.id, { price: e.target.value })}
-                      placeholder="0 = precio del producto"
+                      readOnly={Boolean(selected) && !allowPriceOverride}
+                      onChange={(e)=>updateRow(row.id,{price:e.target.value})}
                     />
+                    {selected && !allowPriceOverride && <span className="field-hint">Precio de catálogo</span>}
                   </td>
-                  {showCostField && (
-                    <td>
-                      <input
-                        name={`cost_${index + 1}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={row.cost}
-                        onChange={(e) => updateRow(row.id, { cost: e.target.value })}
-                        placeholder="Solo personalizados"
-                      />
-                    </td>
-                  )}
-                  <td>
-                    <input
-                      name={`discount_${index + 1}`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={row.discount}
-                      onChange={(e) => updateRow(row.id, { discount: e.target.value })}
-                    />
-                  </td>
-                  <td>
-                    <button type="button" className="btn btn-secondary" onClick={() => removeRow(row.id)} aria-label={`Quitar línea ${row.id}`}>
-                      Quitar
-                    </button>
-                  </td>
+                  {showCostField && <td><input name={`cost_${index + 1}`} type="number" min="0" step="0.01" value={row.cost} readOnly={Boolean(selected)} onChange={(e)=>updateRow(row.id,{cost:e.target.value})}/></td>}
+                  <td><input name={`discount_${index + 1}`} type="number" min="0" step="0.01" value={row.discount} onChange={(e)=>updateRow(row.id,{discount:e.target.value})}/></td>
+                  <td><button type="button" className="btn btn-secondary" onClick={()=>removeRow(row.id)}>Quitar</button></td>
                 </tr>
               );
             })}
@@ -209,22 +163,22 @@ export function SaleBuilder({
         </table>
       </div>
 
+      <datalist id="sale-products">
+        {products.map((product) => (
+          <option key={product.id} value={product.product_code}>{[product.brand, product.model, product.description].filter(Boolean).join(" ")} · S/ {Number(product.sale_price).toFixed(2)} · stock {product.stock_qty}</option>
+        ))}
+      </datalist>
+
       <input type="hidden" name="item_count" value={rows.length} />
 
-      <div className="spread" style={{ marginTop: 14, alignItems: "center" }}>
-        <div className="muted">
-          {rows.length} {rows.length === 1 ? "línea" : "líneas"} · Total estimado antes del descuento global
-        </div>
-        <strong style={{ fontSize: 20 }}>S/ {total.toFixed(2)}</strong>
+      <div className="sale-summary" style={{marginTop:14}}>
+        <div><strong>{rows.length}</strong> {rows.length===1 ? "línea" : "líneas"} de venta</div>
+        <div><span className="muted">Subtotal de componentes</span><strong>S/ {total.toFixed(2)}</strong></div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-        <button type="button" className="btn btn-secondary" onClick={addRow}>
-          + Agregar otra línea
-        </button>
-        <button type="submit" className="btn btn-primary">
-          Registrar venta
-        </button>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
+        <button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar otra línea</button>
+        <button type="submit" className="btn btn-primary">Registrar venta</button>
       </div>
     </div>
   );
