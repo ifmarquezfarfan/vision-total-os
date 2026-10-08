@@ -22,7 +22,7 @@ export async function createSale(formData:FormData){
   const saleDiscount=Number(formData.get("sale_discount")??0);
   const responsible=String(formData.get("responsible")??"").trim();
   const itemCountRaw=Number(formData.get("item_count")??0);
-  const itemCount=Number.isFinite(itemCountRaw)?Math.min(Math.max(Math.trunc(itemCountRaw),1),50):1;
+  const itemCount=Number.isFinite(itemCountRaw)?Math.min(Math.max(Math.trunc(itemCountRaw),1),60):1;
   const items:Array<Record<string,unknown>>=[];
   for(let i=1;i<=itemCount;i++){
     const productId=String(formData.get(`product_${i}`)??"");
