@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { createPurchase, createSupplier } from "./actions";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function PurchasesPage({
   searchParams
@@ -32,12 +33,18 @@ export default async function PurchasesPage({
         <div className="content">
           <h1 className="page-title">Compras y proveedores</h1>
           <p className="subtitle">Cada compra recibida alimenta el inventario y deja trazabilidad de costo y pago.</p>
+          <QuickStart title="Inicio rápido de compras" hint="Compra = abastecer. Después revisa que el inventario haya recibido correctamente el stock y el costo." items={[
+            {label:"Nueva compra",href:"#nueva-compra",description:"Entrada de mercadería",tone:"green"},
+            {label:"Nuevo proveedor",href:"#nuevo-proveedor",description:"Guardar contacto",tone:"blue"},
+            {label:"Revisar inventario",href:"/inventario",description:"Confirmar existencia",tone:"purple"},
+            {label:"Revisar finanzas",href:"/finanzas",description:"Pago y caja",tone:"orange"}
+          ]}/>
 
           {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
           {params.created && <p className="notice" style={{marginTop:18}}>Compra registrada: {params.created}</p>}
           {params.created_supplier && <p className="notice" style={{marginTop:18}}>Proveedor creado.</p>}
 
-          <section className="grid grid-3 section">
+          <section id="nueva-compra" className="grid grid-3 section">
             <div className="card" style={{gridColumn:"span 2"}}>
               <h2>Nueva compra</h2>
               <form action={createPurchase} className="form">
@@ -60,7 +67,7 @@ export default async function PurchasesPage({
               </form>
             </div>
 
-            <div className="card">
+            <div id="nuevo-proveedor" className="card">
               <h2>Nuevo proveedor</h2>
               <form action={createSupplier} className="form">
                 <div className="field"><label>Nombre *</label><input name="name" required/></div>
