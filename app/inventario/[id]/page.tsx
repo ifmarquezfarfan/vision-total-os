@@ -23,7 +23,7 @@ export default async function ProductDetailPage({
   if (!membership || !branch) redirect("/onboarding");
 
   const [{ data: product }, { data: stockRows }, { data: locations }, { data: movements }] = await Promise.all([
-    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
+    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,photo_url,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
     supabase.from("inventory_stock").select("location_id,quantity").eq("product_id",id).limit(100),
     supabase.from("inventory_locations").select("id,name").eq("branch_id",branch.branch_id).eq("active",true).order("created_at"),
     supabase.from("inventory_movements").select("id,quantity,movement_type,note,created_at").eq("product_id",id).eq("branch_id",branch.branch_id).order("created_at",{ascending:false}).limit(30),
