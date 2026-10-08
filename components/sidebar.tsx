@@ -17,6 +17,7 @@ export function Sidebar() {
         <Link href="/ventas">Ventas</Link>
         <Link href="/inventario">Inventario</Link>
         <Link href="/pedidos">Pedidos ópticos</Link>
+        <Link href="/finanzas">Finanzas</Link>
       </nav>
 
       <form action={signOut} style={{ marginTop: "auto" }}>
