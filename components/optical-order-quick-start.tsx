@@ -3,34 +3,42 @@
 type OpticalPreset = {
   label: string;
   description: string;
-  values: Record<string,string>;
+  values: Record<string,string|string[]>;
 };
 
 const presets: OpticalPreset[] = [
   {
     label: "Monofocal · 1.56 · AR",
     description: "Plantilla de captura",
-    values: { lens_design:"Monofocal", lens_material:"1.56", lens_index:"1.56", treatments:"Antirreflejo" }
+    values: { lens_design:"Monofocal", lens_material:"Resina orgánica", lens_index:"1.56", treatment_option:["Antirreflejo"] }
   },
   {
     label: "Progresivo · 1.60 · AR",
     description: "Plantilla de captura",
-    values: { lens_design:"Progresivo", lens_material:"1.60", lens_index:"1.60", treatments:"Antirreflejo" }
+    values: { lens_design:"Progresivo", lens_material:"Resina de alto índice", lens_index:"1.60", treatment_option:["Antirreflejo"] }
   },
   {
     label: "Fotocromático + AR",
     description: "Plantilla de captura",
-    values: { lens_type:"Fotocromática", treatments:"Antirreflejo + Fotocromático" }
+    values: { lens_type:"Fotocromática", treatment_option:["Antirreflejo","Fotocromático"] }
   }
 ];
 
-function apply(values:Record<string,string>) {
+function apply(values:Record<string,string|string[]>) {
   for (const [name,value] of Object.entries(values)) {
-    const el = document.querySelector<HTMLSelectElement | HTMLInputElement>(`[name="${name}"]`);
-    if (!el) continue;
-    el.value = value;
-    el.dispatchEvent(new Event("input",{bubbles:true}));
-    el.dispatchEvent(new Event("change",{bubbles:true}));
+    const fields = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[name="${name}"]`);
+    if (!fields.length) continue;
+    const valuesToSelect = Array.isArray(value) ? value : value.split(" · ");
+    if (fields[0] instanceof HTMLInputElement && fields[0].type === "checkbox") {
+      fields.forEach((field) => {
+        if (field instanceof HTMLInputElement) field.checked = valuesToSelect.includes(field.value);
+      });
+      continue;
+    }
+    const field = fields[0];
+    field.value = Array.isArray(value) ? (value[0] ?? "") : value;
+    field.dispatchEvent(new Event("input",{bubbles:true}));
+    field.dispatchEvent(new Event("change",{bubbles:true}));
   }
 }
 
