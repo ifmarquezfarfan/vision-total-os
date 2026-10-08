@@ -19,6 +19,8 @@ export function Sidebar() {
         <Link href="/compras">Compras</Link>
         <Link href="/pedidos">Pedidos ópticos</Link>
         <Link href="/finanzas">Finanzas</Link>
+        <Link href="/equipo">Equipo</Link>
+        <Link href="/auditoria">Auditoría</Link>
       </nav>
 
       <form action={signOut} style={{marginTop:"auto"}}>
