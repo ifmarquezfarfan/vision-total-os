@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { updateProduct } from "./actions";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function ProductDetailPage({
   params,
@@ -40,7 +41,17 @@ export default async function ProductDetailPage({
         <Link href="/inventario" className="btn btn-secondary">Volver a inventario</Link>
       </div>
 
-      {q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>}
+      <QuickStart title="Ficha del producto" hint="Aquí se mantiene la memoria del artículo: foto, datos, stock y movimientos." items={[
+  {label:"Editar ficha",href:"#ficha-producto",description:"Datos comerciales y físicos",tone:"blue"},
+  {label:"Ver stock",href:"#stock-ubicaciones",description:"Dónde está cada unidad",tone:"green"},
+  {label:"Ver movimientos",href:"#movimientos",description:"Entradas y salidas",tone:"orange"},
+  {label:"Volver al catálogo",href:"/inventario",description:"Continuar operación",tone:"purple"}
+]}/>
+<section className="product-photo-hero card section">
+  {product.photo_url?<img src={product.photo_url} alt={[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}/>:<div className="photo-empty-large"><span>Sin foto</span><small>Sube una imagen en la ficha del producto.</small></div>}
+  <div><div className="eyebrow">Vista del producto</div><h2>{[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}</h2><p className="muted">{product.color||"Color no registrado"} · {product.material||"Material no registrado"}</p></div>
+</section>
+{q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>
       {q.updated&&<p className="notice" style={{marginTop:18}}>Producto actualizado.</p>}
 
       <section className="grid grid-4 section">
@@ -50,8 +61,8 @@ export default async function ProductDetailPage({
         <div className="card"><div className="metric-label">Estado</div><div className="metric-value" style={{fontSize:18}}>{product.active?"Activo":"Dado de baja"}</div></div>
       </section>
 
-      {canManage && <section className="card section"><h2>Ficha del producto</h2>
-        <form action={updateProduct} className="form">
+      {canManage && <section id="ficha-producto" className="card section"><h2>Ficha del producto</h2>
+        <form action={updateProduct} className="form" encType="multipart/form-data">
           <input type="hidden" name="id" value={product.id}/>
           <div className="form-grid">
             <div className="field"><label>Categoría</label><select name="category" defaultValue={product.category}><option>Montura</option><option>Lentes</option><option>Tratamiento</option><option>Accesorio</option><option>Servicio</option><option>Otro</option></select></div>
@@ -66,6 +77,7 @@ export default async function ProductDetailPage({
             <div className="field"><label>Modo de inventario</label><select name="inventory_mode" defaultValue={product.inventory_mode}><option value="stock">Stock físico</option><option value="on_demand">Por pedido / bajo demanda</option><option value="service">Servicio, sin stock</option></select></div>
             <div className="field"><label>Estado físico</label><select name="physical_status" defaultValue={product.physical_status}><option>Bueno</option><option>Regular</option><option>Dañado</option><option>Baja</option><option>Otro</option></select></div>
             <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date" defaultValue={product.entry_at?new Date(product.entry_at).toISOString().slice(0,10):""}/></div>
+          <div className="field"><label>Cambiar foto</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"/></div>
           </div>
           <label className="checkline"><input type="checkbox" name="displayed" defaultChecked={product.displayed}/> Está exhibida</label>
           <div className="field"><label>Observaciones</label><input name="notes" defaultValue={product.notes||""}/></div>
@@ -73,12 +85,12 @@ export default async function ProductDetailPage({
         </form>
       </section>}
 
-      <section className="grid grid-2 section">
+      <section id="stock-ubicaciones" className="grid grid-2 section">
         <div className="card"><h2>Stock por ubicación</h2><div className="table-wrap" style={{marginTop:12}}><table><thead><tr><th>Ubicación</th><th>Cantidad</th></tr></thead><tbody>{(stockRows??[]).map(s=><tr key={s.location_id}><td>{locationMap.get(s.location_id)||s.location_id}</td><td>{s.quantity}</td></tr>)}{!stockRows?.length&&<tr><td colSpan={2} className="muted">Sin existencias registradas por ubicación.</td></tr>}</tbody></table></div></div>
         <div className="card"><h2>Datos del artículo</h2><div className="mini-row"><span>Ingreso</span><strong>{product.entry_at?new Date(product.entry_at).toLocaleDateString("es-PE"):"·"}</strong></div><div className="mini-row"><span>Exhibida</span><strong>{product.displayed?"Sí":"No"}</strong></div><div className="mini-row"><span>Estado físico</span><strong>{product.physical_status}</strong></div><div className="mini-row"><span>Ubicación histórica</span><strong>{product.location||"·"}</strong></div><div className="mini-row"><span>Actualizado</span><strong>{new Date(product.updated_at).toLocaleString("es-PE")}</strong></div></div>
       </section>
 
-      <section className="section"><h2>Movimientos recientes</h2><div className="table-wrap"><table><thead><tr><th>Fecha</th><th>Movimiento</th><th>Cantidad</th><th>Motivo</th></tr></thead><tbody>{(movements??[]).map(m=><tr key={m.id}><td>{new Date(m.created_at).toLocaleString("es-PE")}</td><td>{m.movement_type}</td><td>{m.quantity}</td><td>{m.note||"·"}</td></tr>)}{!movements?.length&&<tr><td colSpan={4} className="muted">Sin movimientos.</td></tr>}</tbody></table></div></section>
+      <section id="movimientos" className="section"><h2>Movimientos recientes</h2><div className="table-wrap"><table><thead><tr><th>Fecha</th><th>Movimiento</th><th>Cantidad</th><th>Motivo</th></tr></thead><tbody>{(movements??[]).map(m=><tr key={m.id}><td>{new Date(m.created_at).toLocaleString("es-PE")}</td><td>{m.movement_type}</td><td>{m.quantity}</td><td>{m.note||"·"}</td></tr>)}{!movements?.length&&<tr><td colSpan={4} className="muted">Sin movimientos.</td></tr>}</tbody></table></div></section>
     </div>
   </main></div>;
 }
