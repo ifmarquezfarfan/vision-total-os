@@ -17,7 +17,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
   const [{data:clients},{data:leads},{data:products},{data:quotes}]=await Promise.all([
     supabase.from("clients").select("id,full_name,dni").order("full_name").limit(300),
     supabase.from("leads").select("id,lead_code,full_name,stage").order("created_at",{ascending:false}).limit(300),
-    supabase.from("products").select("id,product_code,brand,model,description,cost,sale_price").eq("active",true).order("brand").limit(300),
+    supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price").eq("active",true).order("brand").limit(300),
     supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id").order("quote_at",{ascending:false}).limit(120)
   ]);
 
