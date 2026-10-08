@@ -2,12 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createClientRecord } from "./actions";
+import { createClientRecord, deleteClientRecord } from "./actions";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export default async function ClientsPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; created?: string; q?: string }>;
+  searchParams: Promise<{ error?: string; created?: string; q?: string; deleted?: string; archived?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +57,7 @@ export default async function ClientsPage({
           </div>
 
           {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
-          {params.created && <p className="notice" style={{marginTop:18}}>Cliente registrado correctamente.</p>}
+          {params.created && <p className="notice" style={{marginTop:18}}>Cliente registrado correctamente.</p>}\n          {params.deleted && <p className="notice" style={{marginTop:18}}>Cliente eliminado.</p>}\n          {params.archived && <p className="notice" style={{marginTop:18}}>El cliente tenía historial y fue desactivado para conservar la trazabilidad.</p>}
 
           <section className="card section">
             <h2>Buscar cliente</h2>
@@ -87,7 +88,7 @@ export default async function ClientsPage({
           <section className="section">
             <h2>{q ? "Resultados" : "Cartera"}</h2>
             <div className="table-wrap"><table>
-              <thead><tr><th>Código</th><th>Cliente</th><th>DNI</th><th>WhatsApp</th><th>Estado</th><th>Comunicaciones</th></tr></thead>
+              <thead><tr><th>Código</th><th>Cliente</th><th>DNI</th><th>WhatsApp</th><th>Estado</th><th>Comunicaciones</th><th></th></tr></thead>
               <tbody>
                 {(clients ?? []).map(client => (
                   <tr key={client.id}>
@@ -108,7 +109,7 @@ export default async function ClientsPage({
                     <td>{client.marketing_opt_in ? "Autorizado" : "No autorizado"}</td>
                   </tr>
                 ))}
-                {!clients?.length && <tr><td colSpan={6} className="muted">{q ? "No se encontró ningún cliente." : "Todavía no hay clientes registrados."}</td></tr>}
+                {!clients?.length && <tr><td colSpan={7} className="muted">{q ? "No se encontró ningún cliente." : "Todavía no hay clientes registrados."}</td></tr>}
               </tbody>
             </table></div>
           </section>
