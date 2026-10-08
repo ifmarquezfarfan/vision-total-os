@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { importClientsFile, importInventoryFile } from "./actions";
 
-export default async function ImportPage({searchParams}:{searchParams:Promise<{error?:string;imported?:string;inventory_imported?:string;inventory_skipped?:string}>}) {
+export default async function ImportPage({searchParams}:{searchParams:Promise<{error?:string;imported?:string;skipped?:string;inventory_imported?:string;inventory_skipped?:string}>}) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user) redirect("/login");
@@ -15,7 +15,7 @@ export default async function ImportPage({searchParams}:{searchParams:Promise<{e
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Importación</strong><span className="muted">{user.email}</span></header><div className="content">
     <div className="spread"><div><h1 className="page-title">Importar datos</h1><p className="subtitle">Convierte tus archivos históricos en datos operativos sin rehacer el trabajo a mano.</p></div></div>
     {params.error&&<p className="notice" style={{marginTop:18}}>{params.error}</p>}
-    {params.imported&&<p className="notice" style={{marginTop:18}}>Se importaron {params.imported} clientes.</p>}
+    {params.imported&&<p className="notice" style={{marginTop:18}}>Se importaron {params.imported} clientes{params.skipped ? `, ${params.skipped} omitidos por duplicado` : ""}.</p>}
     {params.inventory_imported&&<p className="notice" style={{marginTop:18}}>Inventario: {params.inventory_imported} artículos importados{params.inventory_skipped ? `, ${params.inventory_skipped} omitidos por duplicado` : ""}.</p>}
 
     <section className="grid grid-2 section">
