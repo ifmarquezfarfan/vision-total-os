@@ -50,15 +50,15 @@ export async function createOrder(formData: FormData) {
   if(!["received","in_preparation","at_lab","ready"].includes(status)) redirect("/pedidos?error=Estado%20inválido");
 
   const code="PED-"+Date.now().toString().slice(-8);
-  const {error}=await supabase.from("optical_orders").insert({
+  const {data:createdOrder,error}=await supabase.from("optical_orders").insert({
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
     status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,treatments:treatments||null,measurements,
     promised_at:promisedAtRaw?new Date(promisedAtRaw).toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     notes:notes||null,organization_id:organizationId,branch_id:branchId
-  });
-  if(error) redirect("/pedidos?error=No%20se%20pudo%20crear%20el%20pedido");
-  redirect("/pedidos/"+encodeURIComponent(code)+"?created=1");
+  }).select("id,order_code").single();
+  if(error || !createdOrder) redirect("/pedidos?error=No%20se%20pudo%20crear%20el%20pedido");
+  redirect("/pedidos/"+encodeURIComponent(createdOrder.id)+"?created=1");
 }
 
 export async function updateOrderOperational(formData: FormData) {
