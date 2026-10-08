@@ -87,3 +87,31 @@ export async function convertQuoteToSale(formData: FormData) {
   const saleCode = typeof data === "object" && data && "sale_code" in data ? String((data as { sale_code: string }).sale_code) : "venta";
   redirect("/cotizaciones?converted=" + encodeURIComponent(saleCode));
 }
+
+
+export async function deleteQuote(formData: FormData) {
+  const id = String(formData.get("quote_id") ?? "");
+  if (!id) redirect("/cotizaciones?error=Cotización%20inválida");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+
+  const { data: quote } = await supabase.from("quotes").select("id,status,sale_id").eq("id", id).eq("organization_id", membership.organization_id).eq("branch_id", branch.branch_id).maybeSingle();
+  if (!quote) redirect("/cotizaciones?error=Cotización%20no%20encontrada");
+  if (quote.sale_id || !["draft","cancelled","rejected","expired"].includes(quote.status)) {
+    redirect("/cotizaciones?error=Solo%20se%20pueden%20eliminar%20cotizaciones%20sin%20venta");
+  }
+
+  const { error } = await supabase.from("quotes").delete()
+    .eq("id", id)
+    .eq("organization_id", membership.organization_id)
+    .eq("branch_id", branch.branch_id);
+
+  if (error) redirect("/cotizaciones?error=No%20se%20pudo%20eliminar%20la%20cotización");
+  redirect("/cotizaciones?deleted=1");
+}
