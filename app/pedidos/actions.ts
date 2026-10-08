@@ -28,6 +28,10 @@ export async function createOrder(formData:FormData){
   const treatments=[...new Set([...treatmentOptions,...(otherTreatments?[otherTreatments]:[])])].join(" · ");
   const lensDiameterRaw=String(formData.get("lens_diameter_mm")??"").trim();
   const lensDiameter=lensDiameterRaw?Number(lensDiameterRaw):null;
+  const lensCenterThicknessRaw=String(formData.get("lens_center_thickness_mm")??"").trim();
+  const lensCenterThickness=lensCenterThicknessRaw?Number(lensCenterThicknessRaw):null;
+  const lensEdgeThicknessRaw=String(formData.get("lens_edge_thickness_mm")??"").trim();
+  const lensEdgeThickness=lensEdgeThicknessRaw?Number(lensEdgeThicknessRaw):null;
   const lensTintColor=String(formData.get("lens_tint_color")??"").trim();
   const lensDesign=String(formData.get("lens_design")??"").trim();
   const lensMaterial=String(formData.get("lens_material")??"").trim();
@@ -68,8 +72,9 @@ export async function createOrder(formData:FormData){
 
   if(!clientId) redirect("/pedidos?error=El%20cliente%20es%20obligatorio");
   if(!["received","in_preparation","at_lab","ready"].includes(status)) redirect("/pedidos?error=Estado%20inválido");
-  if(lensDiameter!==null&&(!Number.isFinite(lensDiameter)||lensDiameter<=0||lensDiameter>120)) redirect("/pedidos?error=Revisa%20el%20diámetro%20mínimo%20de%20lente");
-  if(lensDiameterRaw&&!Number.isFinite(Number(lensDiameterRaw))) redirect("/pedidos?error=El%20diámetro%20de%20lente%20debe%20ser%20numérico");
+  if(lensDiameterRaw&&(!Number.isFinite(Number(lensDiameterRaw))||lensDiameter===null||lensDiameter<=0||lensDiameter>120)) redirect("/pedidos?error=Revisa%20el%20diámetro%20mínimo%20de%20lente");
+  if(lensCenterThicknessRaw&&(!Number.isFinite(Number(lensCenterThicknessRaw))||lensCenterThickness===null||lensCenterThickness<=0||lensCenterThickness>20)) redirect("/pedidos?error=Revisa%20el%20espesor%20central");
+  if(lensEdgeThicknessRaw&&(!Number.isFinite(Number(lensEdgeThicknessRaw))||lensEdgeThickness===null||lensEdgeThickness<=0||lensEdgeThickness>20)) redirect("/pedidos?error=Revisa%20el%20espesor%20de%20borde");
 
   if(saleId){
     const {data:sale}=await supabase.from("sales").select("id,client_id,organization_id,branch_id").eq("id",saleId).maybeSingle();
@@ -89,7 +94,8 @@ export async function createOrder(formData:FormData){
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
     status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,
     lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,
-    lens_diameter_mm:lensDiameter,lens_tint_color:lensTintColor||null,treatments:treatments||null,measurements,
+    lens_diameter_mm:lensDiameter,lens_center_thickness_mm:lensCenterThickness,lens_edge_thickness_mm:lensEdgeThickness,
+    lens_tint_color:lensTintColor||null,treatments:treatments||null,measurements,
     promised_at:promisedAtRaw?new Date(promisedAtRaw).toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     notes:notes||null,organization_id:organizationId,branch_id:branchId
