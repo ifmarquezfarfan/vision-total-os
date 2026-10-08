@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -63,6 +64,12 @@ export default async function DashboardPage() {
             <div className="notice">Mes actual · {now.toLocaleDateString("es-PE",{month:"long",year:"numeric"})}</div>
           </div>
 
+          <QuickStart title="¿Qué hago ahora?" hint="Abre el módulo según la acción que quieras completar, no según dónde recuerdes haber visto el dato." items={[
+      {label:"Registrar venta",href:"/ventas",description:"Caja + productos + pago",tone:"green"},
+      {label:"Crear pedido óptico",href:"/pedidos",description:"Receta + lunas + laboratorio",tone:"purple"},
+      {label:"Revisar agenda",href:"/seguimientos",description:"Próximas acciones",tone:"orange"},
+      {label:"Revisar stock",href:"/inventario",description:"Qué hay y qué falta",tone:"blue"}
+    ]}/>
           <section className="grid grid-4 section">
             <div className="card"><div className="metric-label">Clientes</div><div className="metric-value">{clients??0}</div></div>
             <div className="card"><div className="metric-label">Leads</div><div className="metric-value">{leads??0}</div></div>
@@ -101,7 +108,7 @@ export default async function DashboardPage() {
           <section className="card section">
             <div className="spread"><div><h2>Pedidos en curso</h2><p className="muted">Lo que debe moverse hoy en taller/laboratorio.</p></div><Link href="/pedidos" className="link-strong">Ver todos</Link></div>
             <div className="table-wrap" style={{marginTop:12}}><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Estado</th><th>Prometido</th></tr></thead><tbody>
-              {(activeOrders??[]).map(o=><tr key={o.id}><td><Link href={"/pedidos/"+o.id} className="link-strong">{o.order_code}</Link></td><td>{o.client_id?clientMap.get(o.client_id)||"Cliente":"·"}</td><td>{o.status}</td><td>{o.promised_at?new Date(o.promised_at).toLocaleString("es-PE"):"Sin fecha"}</td></tr>)}
+              {(activeOrders??[]).map(o=><tr key={o.id}><td><Link href={"/pedidos/"+o.id} className="link-strong">{o.order_code}</Link></td><td>{o.client_id?clientMap.get(o.client_id)||"Cliente":"·"}</td><td><span className={`status-badge ${o.status==="ready"?"status-info":o.status==="cancelled"?"status-danger":"status-warning"}`}>{o.status}</span></td><td>{o.promised_at?new Date(o.promised_at).toLocaleString("es-PE"):"Sin fecha"}</td></tr>)}
               {!activeOrders?.length&&<tr><td colSpan={4} className="muted">No hay pedidos activos.</td></tr>}
             </tbody></table></div>
           </section>
