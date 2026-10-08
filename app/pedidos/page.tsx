@@ -56,10 +56,12 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
             <div className="field"><label>Material</label><select name="lens_material" defaultValue=""><option value="">Seleccionar</option><option value="CR-39">CR-39</option><option value="Policarbonato">Policarbonato</option><option value="1.56">1.56</option><option value="1.60">1.60</option><option value="1.67">1.67</option><option value="1.74">1.74</option><option value="Otro">Otro</option></select></div>
             <div className="field"><label>Índice</label><input name="lens_index" placeholder="Ej. 1.56" /></div>
             <div className="field"><label>Marca de luna</label><input name="lens_brand" placeholder="Ej. Essilor, Hoya, Zeiss" /></div>
-            <div className="field"><label>Tipo / descripción</label><input name="lens_type" placeholder="Ej. Digital, ocupacional, fotocromática" /></div>
+            <div className="field"><label>Tipo / descripción</label><input name="lens_type" list="lens-type-suggestions" placeholder="Ej. Digital, ocupacional, fotocromática" /></div>
+            <datalist id="lens-type-suggestions"><option value="Digital"/><option value="Ocupacional"/><option value="Fotocromática"/><option value="Polarizada"/><option value="Monofocal digital"/></datalist>
           </div>
           <div className="card"><h2>Tratamientos y laboratorio</h2>
-            <div className="field"><label>Tratamientos</label><input name="treatments" placeholder="Antirreflejo, filtro azul, fotocromático, etc." /><span className="field-hint">Registra lo elegido o solicitado; valida la configuración antes de enviarla.</span></div>
+            <div className="field"><label>Tratamientos</label><input name="treatments" list="treatment-suggestions" placeholder="Antirreflejo, filtro azul, fotocromático, etc." /><span className="field-hint">Registra lo elegido o solicitado; valida la configuración antes de enviarla.</span></div>
+            <datalist id="treatment-suggestions"><option value="Antirreflejo"/><option value="Filtro azul"/><option value="Fotocromático"/><option value="Antirreflejo + Fotocromático"/><option value="Antirreflejo + Filtro azul"/></datalist>
             <div className="field"><label>Laboratorio</label><input name="lab" /></div>
             <div className="field"><label>Referencia de laboratorio</label><input name="lab_reference" /></div>
             <div className="field"><label>Fecha prometida</label><input name="promised_at" type="datetime-local" /></div>
