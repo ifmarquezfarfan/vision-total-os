@@ -24,9 +24,27 @@ export async function createOrder(formData: FormData) {
   const labReference=String(formData.get("lab_reference")??"").trim();
   const lensType=String(formData.get("lens_type")??"").trim();
   const treatments=String(formData.get("treatments")??"").trim();
+  const lensDesign=String(formData.get("lens_design")??"").trim();
+  const lensMaterial=String(formData.get("lens_material")??"").trim();
+  const lensIndex=String(formData.get("lens_index")??"").trim();
+  const lensBrand=String(formData.get("lens_brand")??"").trim();
   const promisedAtRaw=String(formData.get("promised_at")??"").trim();
   const adaptationRaw=String(formData.get("adaptation_followup_at")??"").trim();
   const notes=String(formData.get("notes")??"").trim();
+  const measurements={
+    pd_binocular:String(formData.get("pd_binocular")??"").trim()||null,
+    pd_od:String(formData.get("pd_od")??"").trim()||null,
+    pd_os:String(formData.get("pd_os")??"").trim()||null,
+    height_od:String(formData.get("height_od")??"").trim()||null,
+    height_os:String(formData.get("height_os")??"").trim()||null,
+    vertex:String(formData.get("vertex")??"").trim()||null,
+    pantoscopic:String(formData.get("pantoscopic")??"").trim()||null,
+    wrap:String(formData.get("wrap")??"").trim()||null,
+    frame_a:String(formData.get("frame_a")??"").trim()||null,
+    frame_b:String(formData.get("frame_b")??"").trim()||null,
+    frame_dbl:String(formData.get("frame_dbl")??"").trim()||null,
+    frame_temple:String(formData.get("frame_temple")??"").trim()||null
+  };
 
   if(!clientId) redirect("/pedidos?error=El%20cliente%20es%20obligatorio");
   if(!["received","in_preparation","at_lab","ready"].includes(status)) redirect("/pedidos?error=Estado%20inválido");
@@ -34,7 +52,7 @@ export async function createOrder(formData: FormData) {
   const code="PED-"+Date.now().toString().slice(-8);
   const {error}=await supabase.from("optical_orders").insert({
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
-    status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,treatments:treatments||null,
+    status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,treatments:treatments||null,measurements,
     promised_at:promisedAtRaw?new Date(promisedAtRaw).toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     notes:notes||null,organization_id:organizationId,branch_id:branchId
