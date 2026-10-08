@@ -79,6 +79,14 @@ export function SaleBuilder({
     });
   };
 
+  const applyPreset = (types: string[]) => {
+    setRows(types.map((componentType, index) => ({
+      ...emptyRow(index + 1),
+      componentType,
+      description: componentType === "frame" ? "Montura" : componentType === "lens" ? "Lunas" : componentType === "treatment" ? "Tratamiento" : "",
+    })));
+  };
+
   const addRow = () => {
     setRows((current) => [...current, emptyRow(Math.max(...current.map((r) => r.id), 0) + 1)]);
   };
