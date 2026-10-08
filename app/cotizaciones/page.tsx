@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createQuote, updateQuoteStatus, convertQuoteToSale } from "./actions";
+import { createQuote, updateQuoteStatus, convertQuoteToSale, deleteQuote } from "./actions";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
-export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string}>}) {
+export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string}>}) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user) redirect("/login");
@@ -27,7 +28,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
     {params.error&&<p className="notice" style={{marginTop:18}}>{params.error}</p>}
     {params.created&&<p className="notice" style={{marginTop:18}}>Cotización creada: {params.created}</p>}
     {params.updated&&<p className="notice" style={{marginTop:18}}>Estado actualizado.</p>}
-    {params.converted&&<p className="notice" style={{marginTop:18}}>Cotización convertida en venta: {params.converted}</p>}
+    {params.converted&&<p className="notice" style={{marginTop:18}}>Cotización convertida en venta: {params.converted}</p>}\n    {params.deleted&&<p className="notice" style={{marginTop:18}}>Cotización eliminada.</p>}
 
     <section className="card section"><h2>Nueva cotización</h2><form action={createQuote} className="form">
       <div className="form-grid">
