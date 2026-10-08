@@ -43,3 +43,25 @@ export async function createFollowUp(formData: FormData) {
   if (error) redirect("/seguimientos?error=No%20se%20pudo%20guardar%20el%20seguimiento");
   redirect("/seguimientos?created=1");
 }
+
+
+export async function deleteFollowUp(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect("/seguimientos?error=Seguimiento%20inválido");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+
+  const { error } = await supabase.from("follow_ups").delete()
+    .eq("id", id)
+    .eq("organization_id", membership.organization_id)
+    .eq("branch_id", branch.branch_id);
+
+  if (error) redirect("/seguimientos?error=No%20se%20pudo%20eliminar%20el%20seguimiento");
+  redirect("/seguimientos?deleted=1");
+}
