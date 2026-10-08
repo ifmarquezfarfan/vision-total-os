@@ -79,6 +79,7 @@ export default async function LeadsPage({
                           <select name="stage" defaultValue={lead.stage}>
                             {Object.entries(stageName).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
                           </select>
+                          <span className={`status-badge ${lead.stage==="won"?"status-success":lead.stage==="lost"?"status-danger":lead.stage==="quoted"?"status-info":"status-warning"}`}>{stageName[lead.stage]||lead.stage}</span>
                           <button className="btn btn-secondary">Guardar</button>
                         </form>
                       </td>
