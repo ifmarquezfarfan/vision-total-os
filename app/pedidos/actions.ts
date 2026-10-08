@@ -49,6 +49,27 @@ export async function createOrder(formData: FormData) {
   if(!clientId) redirect("/pedidos?error=El%20cliente%20es%20obligatorio");
   if(!["received","in_preparation","at_lab","ready"].includes(status)) redirect("/pedidos?error=Estado%20inválido");
 
+  if (saleId) {
+    const { data: sale } = await supabase.from("sales").select("id,client_id,organization_id,branch_id").eq("id",saleId).maybeSingle();
+    if (!sale || sale.organization_id !== organizationId || sale.branch_id !== branchId || sale.client_id !== clientId) {
+      redirect("/pedidos?error=La%20venta%20y%20el%20cliente%20no%20coinciden");
+    }
+  }
+
+  if (prescriptionId) {
+    const { data: prescription } = await supabase.from("prescriptions").select("id,client_id,organization_id,branch_id").eq("id",prescriptionId).maybeSingle();
+    if (!prescription || prescription.organization_id !== organizationId || prescription.branch_id !== branchId || prescription.client_id !== clientId) {
+      redirect("/pedidos?error=La%20receta%20no%20pertenece%20al%20cliente%20seleccionado");
+    }
+  }
+
+  if (frameProductId) {
+    const { data: frame } = await supabase.from("products").select("id,category,organization_id,branch_id").eq("id",frameProductId).maybeSingle();
+    if (!frame || frame.organization_id !== organizationId || frame.branch_id !== branchId || frame.category !== "Montura") {
+      redirect("/pedidos?error=La%20montura%20seleccionada%20no%20es%20válida");
+    }
+  }
+
   const code="PED-"+Date.now().toString().slice(-8);
   const {data:createdOrder,error}=await supabase.from("optical_orders").insert({
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
