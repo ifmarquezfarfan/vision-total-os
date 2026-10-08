@@ -36,3 +36,6 @@ table{width:100%;border-collapse:collapse;min-width:720px} th,td{text-align:left
 .sale-summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:#f8f9fa}
 .sale-summary>div:last-child{display:flex;align-items:center;gap:16px}
 @media(max-width:900px){.form-grid-3,.grid-2{grid-template-columns:1fr}}
+
+.sale-presets{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sale-presets .field-hint{margin-right:4px}
