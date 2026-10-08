@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { updateClientRecord, deleteClientRecord } from "../actions";\nimport { ConfirmSubmit } from "@/components/confirm-submit";
+import { updateClientRecord, deleteClientRecord } from "../actions";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 
 export default async function ClientDetailPage({
   params,

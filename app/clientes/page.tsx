@@ -57,7 +57,9 @@ export default async function ClientsPage({
           </div>
 
           {params.error && <p className="notice" style={{marginTop:18}}>{params.error}</p>}
-          {params.created && <p className="notice" style={{marginTop:18}}>Cliente registrado correctamente.</p>}\n          {params.deleted && <p className="notice" style={{marginTop:18}}>Cliente eliminado.</p>}\n          {params.archived && <p className="notice" style={{marginTop:18}}>El cliente tenía historial y fue desactivado para conservar la trazabilidad.</p>}
+          {params.created && <p className="notice" style={{marginTop:18}}>Cliente registrado correctamente.</p>}
+          {params.deleted && <p className="notice" style={{marginTop:18}}>Cliente eliminado.</p>}
+          {params.archived && <p className="notice" style={{marginTop:18}}>El cliente tenía historial y fue desactivado para conservar la trazabilidad.</p>}
 
           <section className="card section">
             <h2>Buscar cliente</h2>
@@ -107,6 +109,7 @@ export default async function ClientsPage({
                     </td>
                     <td>{client.status}</td>
                     <td>{client.marketing_opt_in ? "Autorizado" : "No autorizado"}</td>
+                    <td><form action={deleteClientRecord}><input type="hidden" name="id" value={client.id}/><ConfirmSubmit message="Eliminar cliente? Si tiene historial, se desactivará para conservar la trazabilidad.">Eliminar</ConfirmSubmit></form></td>
                   </tr>
                 ))}
                 {!clients?.length && <tr><td colSpan={7} className="muted">{q ? "No se encontró ningún cliente." : "Todavía no hay clientes registrados."}</td></tr>}

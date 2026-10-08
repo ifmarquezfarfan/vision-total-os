@@ -37,7 +37,8 @@ export default async function FollowUpsPage({
           <p className="subtitle">La agenda comercial: cada interacción deja una próxima acción o un cierre.</p>
 
           {params.error && <p className="notice" style={{ marginTop: 18 }}>{params.error}</p>}
-          {params.created && <p className="notice" style={{ marginTop: 18 }}>Seguimiento registrado correctamente.</p>}\n          {params.deleted && <p className="notice" style={{ marginTop: 18 }}>Seguimiento eliminado.</p>}
+          {params.created && <p className="notice" style={{ marginTop: 18 }}>Seguimiento registrado correctamente.</p>}
+          {params.deleted && <p className="notice" style={{ marginTop: 18 }}>Seguimiento eliminado.</p>}
 
           <section className="card section">
             <h2>Registrar interacción</h2>
@@ -71,6 +72,7 @@ export default async function FollowUpsPage({
                       <td>{item.result || "·"}</td>
                       <td>{item.next_action || "·"}{item.next_action_at ? <><br/><span className="muted">{new Date(item.next_action_at).toLocaleString("es-PE")}</span></> : null}</td>
                       <td>{item.status}</td>
+                      <td><form action={deleteFollowUp}><input type="hidden" name="id" value={item.id}/><ConfirmSubmit message="Eliminar este seguimiento?">Eliminar</ConfirmSubmit></form></td>
                     </tr>
                   ))}
                   {!followUps?.length && <tr><td colSpan={8} className="muted">Todavía no hay seguimientos registrados.</td></tr>}
