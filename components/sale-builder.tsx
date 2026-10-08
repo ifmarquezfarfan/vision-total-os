@@ -209,9 +209,7 @@ export function SaleBuilder({
         </table>
       </div>
 
-      {rows.map((row, index) => (
-        <input key={row.id} type="hidden" name="item_count" value={rows.length} />
-      ))}
+      <input type="hidden" name="item_count" value={rows.length} />
 
       <div className="spread" style={{ marginTop: 14, alignItems: "center" }}>
         <div className="muted">
