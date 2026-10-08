@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { SaleBuilder } from "@/components/sale-builder";
+import { ClientPicker } from "@/components/client-picker";
 import { createSale } from "./actions";
 
 export default async function SalesPage({
