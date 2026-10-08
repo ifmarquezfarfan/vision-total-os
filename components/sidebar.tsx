@@ -21,6 +21,7 @@ export function Sidebar() {
         <Link href="/pedidos">Pedidos ópticos</Link>
         <Link href="/finanzas">Finanzas</Link>
         <Link href="/equipo">Equipo</Link>
+        <Link href="/perfil">Mi perfil</Link>
         <Link href="/auditoria">Auditoría</Link>
       </nav>
 
