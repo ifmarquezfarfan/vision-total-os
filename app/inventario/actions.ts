@@ -118,3 +118,32 @@ export async function adjustStock(formData: FormData) {
 
   redirect("/inventario?adjusted=1");
 }
+
+
+export async function deactivateProduct(formData: FormData) {
+  const productId = String(formData.get("product_id") ?? "");
+  if (!productId) redirect("/inventario?error=Producto%20inválido");
+
+  const { supabase, organizationId, branchId } = await getContext();
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id,stock_qty")
+    .eq("id",productId)
+    .eq("organization_id",organizationId)
+    .eq("branch_id",branchId)
+    .maybeSingle();
+
+  if (!product) redirect("/inventario?error=Producto%20no%20encontrado");
+  if (Number(product.stock_qty) > 0) redirect("/inventario?error=No%20puedes%20dar%20de%20baja%20un%20producto%20con%20stock");
+
+  const { error } = await supabase
+    .from("products")
+    .update({active:false})
+    .eq("id",productId)
+    .eq("organization_id",organizationId)
+    .eq("branch_id",branchId);
+
+  if (error) redirect("/inventario?error=No%20se%20pudo%20dar%20de%20baja%20el%20producto");
+  redirect("/inventario?deactivated=1");
+}
