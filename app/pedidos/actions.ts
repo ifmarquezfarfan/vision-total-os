@@ -74,7 +74,7 @@ export async function updateOrderOperational(formData: FormData) {
 
   const {supabase}=await getContext();
   const {error}=await supabase.from("optical_orders").update({
-    status,qc_status,lab_reference:labReference||null,
+    status,qc_status:qcStatus,lab_reference:labReference||null,
     pickup_notified_at:pickupNotified?new Date().toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     delivered_at:status==="delivered"?new Date().toISOString():null,
