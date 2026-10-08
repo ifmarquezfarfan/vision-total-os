@@ -12,6 +12,7 @@ type Product = {
   cost: number;
   sale_price: number;
   stock_qty: number;
+  inventory_mode?: string;
 };
 
 type SaleRow = {
@@ -138,7 +139,7 @@ export function SaleBuilder({
                       autoComplete="off"
                     />
                     <input type="hidden" name={`product_${index + 1}`} value={row.productId} />
-                    {selected ? <span className="field-hint">Stock {selected.stock_qty} · S/ {Number(selected.sale_price).toFixed(2)}</span> : <span className="field-hint">Personalizado, sin movimiento de stock</span>}
+                    {selected ? <span className="field-hint">{selected.inventory_mode === "stock" ? `Stock ${selected.stock_qty}` : selected.inventory_mode === "on_demand" ? "Bajo demanda" : "Servicio"} · S/ {Number(selected.sale_price).toFixed(2)}</span> : <span className="field-hint">Personalizado, sin movimiento de stock</span>}
                   </td>
                   <td>
                     <select name={`component_${index + 1}`} value={row.componentType} onChange={(e) => updateRow(row.id,{componentType:e.target.value})}>
