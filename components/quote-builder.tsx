@@ -50,7 +50,7 @@ export function QuoteBuilder({products}:{products:Product[]}) {
           <td><input name={`cost_${index+1}`} type="number" min="0" step="0.01" value={row.cost} onChange={e=>update(row.id,{cost:e.target.value})}/></td>
           <td><input name={`discount_${index+1}`} type="number" min="0" step="0.01" value={row.discount} onChange={e=>update(row.id,{discount:e.target.value})}/></td>
           <td><button type="button" className="btn btn-secondary" onClick={()=>setRows(cur=>cur.length===1?cur.filter(()=>true):cur.filter(r=>r.id!==row.id))}>Quitar</button></td>
-        </tr>
+        </tr></Fragment>
       })}
     </tbody></table></div>
     <datalist id="quote-products">{products.map(p=><option key={p.id} value={p.product_code}>{[p.brand,p.model,p.description].filter(Boolean).join(" ")} · S/ {Number(p.sale_price).toFixed(2)}</option>)}</datalist>
