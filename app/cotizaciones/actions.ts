@@ -17,8 +17,10 @@ export async function createQuote(formData: FormData) {
   const expiresAtRaw = String(formData.get("expires_at") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
 
+  const itemCountRaw = Number(formData.get("item_count") ?? 0);
+  const itemCount = Number.isFinite(itemCountRaw) ? Math.min(Math.max(Math.trunc(itemCountRaw), 1), 60) : 1;
   const items: Array<Record<string, unknown>> = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= itemCount; i++) {
     const productId = String(formData.get(`product_${i}`) ?? "");
     const componentType = String(formData.get(`component_${i}`) ?? "other");
     const description = String(formData.get(`description_${i}`) ?? "").trim();
