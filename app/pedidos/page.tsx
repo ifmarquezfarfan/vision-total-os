@@ -53,37 +53,70 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
           </div>
           <div className="card optical-card"><h2>Lunas</h2><OpticalOrderQuickStart/>
             <div className="field"><label>Diseño</label><select name="lens_design" defaultValue=""><option value="">Seleccionar</option><option value="Monofocal">Monofocal</option><option value="Bifocal">Bifocal</option><option value="Progresivo">Progresivo</option><option value="Ocupacional">Ocupacional</option><option value="Otro">Otro</option></select></div>
-            <div className="field"><label>Material</label><select name="lens_material" defaultValue=""><option value="">Seleccionar</option><option value="CR-39">CR-39</option><option value="Policarbonato">Policarbonato</option><option value="1.56">1.56</option><option value="1.60">1.60</option><option value="1.67">1.67</option><option value="1.74">1.74</option><option value="Otro">Otro</option></select></div>
-            <div className="field"><label>Índice</label><input name="lens_index" placeholder="Ej. 1.56" /></div>
+            <div className="field"><label>Material</label><select name="lens_material" defaultValue=""><option value="">Seleccionar</option><option value="Resina orgánica">Resina orgánica</option><option value="CR-39">CR-39</option><option value="Policarbonato">Policarbonato</option><option value="Trivex">Trivex</option><option value="Vidrio mineral">Vidrio mineral</option><option value="Resina de alto índice">Resina de alto índice</option><option value="Otro">Otro</option></select><span className="field-hint">Material e índice son datos distintos. Registra cada uno en su campo.</span></div>
+            <div className="field"><label>Índice de refracción</label><input name="lens_index" list="lens-index-suggestions" placeholder="Ej. 1.56, 1.60, 1.67" /><datalist id="lens-index-suggestions"><option value="1.50"/><option value="1.53"/><option value="1.56"/><option value="1.59"/><option value="1.60"/><option value="1.67"/><option value="1.70"/><option value="1.74"/></datalist></div>
+            <div className="field"><label>Diámetro mínimo / PHI (mm)</label><input name="lens_diameter_mm" type="number" step="1" min="1" max="120" placeholder="Ej. según cálculo o laboratorio" /><span className="field-hint">Opcional. Confirma el diámetro requerido con el proveedor o laboratorio.</span></div>
             <div className="field"><label>Marca de luna</label><input name="lens_brand" placeholder="Ej. Essilor, Hoya, Zeiss" /></div>
-            <div className="field"><label>Tipo / descripción</label><input name="lens_type" list="lens-type-suggestions" placeholder="Ej. Digital, ocupacional, fotocromática" /></div>
-            <datalist id="lens-type-suggestions"><option value="Digital"/><option value="Ocupacional"/><option value="Fotocromática"/><option value="Polarizada"/><option value="Monofocal digital"/></datalist>
+            <div className="field"><label>Tipo / tecnología</label><input name="lens_type" list="lens-type-suggestions" placeholder="Ej. asférica, digital, freeform" /></div>
+            <datalist id="lens-type-suggestions"><option value="Digital"/><option value="Asférica"/><option value="Freeform"/><option value="Ocupacional"/><option value="Fotocromática"/><option value="Polarizada"/><option value="Filtro azul"/><option value="Monofocal digital"/></datalist>
+            <div className="field"><label>Tinte / color</label><input name="lens_tint_color" placeholder="Ej. gris, marrón, verde, sin tinte" /></div>
           </div>
           <div className="card"><h2>Tratamientos y laboratorio</h2>
-            <div className="field"><label>Tratamientos</label><input name="treatments" list="treatment-suggestions" placeholder="Antirreflejo, filtro azul, fotocromático, etc." /><span className="field-hint">Registra lo elegido o solicitado; valida la configuración antes de enviarla.</span></div>
-            <datalist id="treatment-suggestions"><option value="Antirreflejo"/><option value="Filtro azul"/><option value="Fotocromático"/><option value="Antirreflejo + Fotocromático"/><option value="Antirreflejo + Filtro azul"/></datalist>
+            <div className="field"><label>Recubrimientos y tratamientos</label><div className="check-grid">
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Antirreflejo" /> Antirreflejo</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Filtro UV" /> Filtro UV</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Filtro azul" /> Filtro azul</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Fotocromático" /> Fotocromático</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Polarizado" /> Polarizado</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Antirrayas" /> Antirrayas</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Hidrofóbico / fácil limpieza" /> Hidrofóbico / fácil limpieza</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Oleofóbico" /> Oleofóbico</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Espejado" /> Espejado</label>
+            </div></div>
+            <div className="field"><label>Otro tratamiento / especificación</label><input name="treatments_other" placeholder="Tinte especial, coating del proveedor, etc." /><span className="field-hint">Puedes marcar varias opciones y añadir una indicación libre.</span></div>
             <div className="field"><label>Laboratorio</label><input name="lab" /></div>
             <div className="field"><label>Referencia de laboratorio</label><input name="lab_reference" /></div>
             <div className="field"><label>Fecha prometida</label><input name="promised_at" type="datetime-local" /></div>
           </div>
         </div>
 
-        <div className="card" style={{marginTop:14}}>
-          <h2>Medidas de montaje</h2>
-          <p className="muted">No todas son necesarias en todos los trabajos. Se guardan estructuradas para que el pedido pueda viajar completo al laboratorio.</p>
-          <div className="form-grid">
-            <div className="field"><label>DP binocular</label><input name="pd_binocular" placeholder="mm" /></div>
-            <div className="field"><label>DP monocular OD</label><input name="pd_od" placeholder="mm" /></div>
-            <div className="field"><label>DP monocular OI</label><input name="pd_os" placeholder="mm" /></div>
-            <div className="field"><label>Altura OD</label><input name="height_od" placeholder="mm" /></div>
-            <div className="field"><label>Altura OI</label><input name="height_os" placeholder="mm" /></div>
-            <div className="field"><label>Distancia vértice</label><input name="vertex" placeholder="mm" /></div>
-            <div className="field"><label>Inclinación pantoscópica</label><input name="pantoscopic" placeholder="°" /></div>
-            <div className="field"><label>Ángulo de envolvimiento</label><input name="wrap" placeholder="°" /></div>
-            <div className="field"><label>Calibre A</label><input name="frame_a" placeholder="mm" /></div>
-            <div className="field"><label>Calibre B</label><input name="frame_b" placeholder="mm" /></div>
-            <div className="field"><label>Puente DBL</label><input name="frame_dbl" placeholder="mm" /></div>
-            <div className="field"><label>Patilla / Temple</label><input name="frame_temple" placeholder="mm" /></div>
+        <div className="grid grid-3" style={{marginTop:14}}>
+          <div className="card">
+            <h2>Centrado y alturas</h2>
+            <p className="muted">Usa milímetros y registra lo que fue medido. En progresivos, altura de montaje para cada ojo.</p>
+            <div className="form-grid">
+              <div className="field"><label>DP lejos binocular (mm)</label><input name="pd_binocular" type="number" step="0.5" min="1" max="100" /></div>
+              <div className="field"><label>DP lejos OD (mm)</label><input name="pd_od" type="number" step="0.5" min="1" max="50" /></div>
+              <div className="field"><label>DP lejos OI (mm)</label><input name="pd_os" type="number" step="0.5" min="1" max="50" /></div>
+              <div className="field"><label>DP cerca binocular (mm)</label><input name="pd_near_binocular" type="number" step="0.5" min="1" max="100" /></div>
+              <div className="field"><label>DP cerca OD (mm)</label><input name="pd_near_od" type="number" step="0.5" min="1" max="50" /></div>
+              <div className="field"><label>DP cerca OI (mm)</label><input name="pd_near_os" type="number" step="0.5" min="1" max="50" /></div>
+              <div className="field"><label>Altura OD (mm)</label><input name="height_od" type="number" step="0.5" min="0" /></div>
+              <div className="field"><label>Altura OI (mm)</label><input name="height_os" type="number" step="0.5" min="0" /></div>
+              <div className="field"><label>Distancia de trabajo (cm)</label><input name="working_distance_cm" type="number" step="1" min="1" max="500" /></div>
+            </div>
+          </div>
+          <div className="card">
+            <h2>Adaptación de montura</h2>
+            <p className="muted">Medidas que ayudan al centrado, cálculo óptico y elección de montaje. No inventes valores si no fueron tomados.</p>
+            <div className="form-grid">
+              <div className="field"><label>Calibre A (mm)</label><input name="frame_a" type="number" step="0.5" min="1" /></div>
+              <div className="field"><label>Altura B (mm)</label><input name="frame_b" type="number" step="0.5" min="1" /></div>
+              <div className="field"><label>Diámetro efectivo ED (mm)</label><input name="frame_ed" type="number" step="0.5" min="1" /></div>
+              <div className="field"><label>Puente DBL (mm)</label><input name="frame_dbl" type="number" step="0.5" min="1" /></div>
+              <div className="field"><label>Patilla / temple (mm)</label><input name="frame_temple" type="number" step="1" min="1" /></div>
+              <div className="field"><label>Ancho frontal (mm)</label><input name="frame_front_width" type="number" step="0.5" min="1" /></div>
+              <div className="field"><label>Distancia vértice (mm)</label><input name="vertex" type="number" step="0.5" min="0" /></div>
+              <div className="field"><label>Inclinación pantoscópica (°)</label><input name="pantoscopic" type="number" step="0.5" min="-30" max="45" /></div>
+              <div className="field"><label>Ángulo de envolvimiento (°)</label><input name="wrap" type="number" step="0.5" min="0" max="90" /></div>
+              <div className="field"><label>Tipo de montaje</label><select name="mounting_type" defaultValue=""><option value="">No especificado</option><option value="Aro completo">Aro completo</option><option value="Ranurado / nylor">Ranurado / nylor</option><option value="Al aire / perforado">Al aire / perforado</option><option value="Especial">Especial</option></select></div>
+            </div>
+          </div>
+          <div className="card">
+            <h2>Verificación de datos</h2>
+            <p className="muted">Antes de enviar al laboratorio, confirma que la receta coincide con el cliente y que cada medida corresponde al ojo correcto.</p>
+            <div className="field"><label>Referencia / identificación de montura</label><input name="frame_reference" placeholder="Marca, modelo o SKU si aplica" /></div>
+            <div className="field"><label>Medida o instrucción adicional</label><textarea name="measurement_notes" rows={3} placeholder="Prisma, descentramiento indicado por laboratorio, ranurado, perforaciones, etc." /></div>
           </div>
         </div>
 
