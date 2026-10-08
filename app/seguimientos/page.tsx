@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { createFollowUp, deleteFollowUp } from "./actions";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { QuickStart } from "@/components/quick-start";
 
 export default async function FollowUpsPage({
   searchParams
@@ -35,12 +36,18 @@ export default async function FollowUpsPage({
         <div className="content">
           <h1 className="page-title">Seguimientos</h1>
           <p className="subtitle">La agenda comercial: cada interacción deja una próxima acción o un cierre.</p>
+          <QuickStart title="Inicio rápido de seguimiento" hint="No cierres una interacción en “hablé con el cliente”. Deja resultado + próxima acción cuando todavía exista trabajo pendiente." items={[
+            {label:"Postventa",href:"#registrar-seguimiento",description:"Entrega y adaptación",tone:"green"},
+            {label:"Cotización",href:"#registrar-seguimiento",description:"Retoma una propuesta",tone:"purple"},
+            {label:"Reactivación",href:"#registrar-seguimiento",description:"Recupera un cliente",tone:"orange"},
+            {label:"Revisar agenda",href:"#historial-seguimientos",description:"Ver lo pendiente",tone:"blue"}
+          ]}/>
 
           {params.error && <p className="notice" style={{ marginTop: 18 }}>{params.error}</p>}
           {params.created && <p className="notice" style={{ marginTop: 18 }}>Seguimiento registrado correctamente.</p>}
           {params.deleted && <p className="notice" style={{ marginTop: 18 }}>Seguimiento eliminado.</p>}
 
-          <section className="card section">
+          <section id="registrar-seguimiento" className="card section">
             <h2>Registrar interacción</h2>
             <form action={createFollowUp} className="form">
               <div className="form-grid">
@@ -57,7 +64,7 @@ export default async function FollowUpsPage({
             </form>
           </section>
 
-          <section className="section">
+          <section id="historial-seguimientos" className="section">
             <h2>Historial</h2>
             <div className="table-wrap">
               <table>
@@ -71,7 +78,7 @@ export default async function FollowUpsPage({
                       <td>{item.channel || "·"}</td>
                       <td>{item.result || "·"}</td>
                       <td>{item.next_action || "·"}{item.next_action_at ? <><br/><span className="muted">{new Date(item.next_action_at).toLocaleString("es-PE")}</span></> : null}</td>
-                      <td>{item.status}</td>
+                      <td><span className={`status-badge ${item.status==="open"?"status-warning":"status-success"}`}>{item.status==="open"?"Abierto":"Cerrado"}</span></td>
                       <td><form action={deleteFollowUp}><input type="hidden" name="id" value={item.id}/><ConfirmSubmit message="Eliminar este seguimiento?">Eliminar</ConfirmSubmit></form></td>
                     </tr>
                   ))}
