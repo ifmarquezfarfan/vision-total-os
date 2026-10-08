@@ -23,7 +23,7 @@ export default async function InventoryPage({
 
   let productQuery = supabase
     .from("products")
-    .select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,active")
+    .select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,active")
     .eq("active",true)
     .order("created_at",{ascending:false})
     .limit(500);
