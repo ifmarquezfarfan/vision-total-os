@@ -20,15 +20,28 @@ async function getContext() {
   return { supabase, userId: user.id, organizationId: membership.organization_id, branchId: branch.branch_id };
 }
 
-function parseFile(buffer: ArrayBuffer, fileName: string): Record<string, string>[] {
-  const workbook = XLSX.read(buffer, { type: "array" });
+function parseFile(buffer: ArrayBuffer): Record<string, string>[] {
+  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   if (!firstSheet) return [];
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+
   return rows.map((row) => {
     const normalized: Record<string, string> = {};
     for (const [rawKey, rawValue] of Object.entries(row)) {
-      normalized[key(rawKey)] = String(rawValue ?? "").trim();
+      const normalizedKey = key(rawKey);
+      if (rawValue instanceof Date) {
+        normalized[normalizedKey] = rawValue.toISOString();
+      } else if (typeof rawValue === "number" && /fecha|date|at$/.test(normalizedKey)) {
+        const parsed = XLSX.SSF.parse_date_code(rawValue);
+        if (parsed) {
+          normalized[normalizedKey] = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, parsed.S || 0)).toISOString();
+        } else {
+          normalized[normalizedKey] = String(rawValue);
+        }
+      } else {
+        normalized[normalizedKey] = String(rawValue ?? "").trim();
+      }
     }
     return normalized;
   });
@@ -36,6 +49,30 @@ function parseFile(buffer: ArrayBuffer, fileName: string): Record<string, string
 
 function truthy(value: string) {
   return ["true", "1", "si", "sí", "yes", "x"].includes(value.trim().toLowerCase());
+}
+
+function numberValue(value: string) {
+  const normalized = value.replace(/[^0-9.,-]/g,"").replace(",", ".").trim();
+  if (!normalized) return 0;
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function integerValue(value: string) {
+  return Math.max(0, Math.floor(numberValue(value)));
+}
+
+function optionalDate(value: string) {
+  const raw = value.trim();
+  if (!raw) return "";
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
+function mapClientStatus(value: string) {
+  const v = value.trim().toLowerCase();
+  if (/inactiv|baja|perdido/.test(v)) return "inactive";
+  return "active";
 }
 
 export async function importClientsFile(formData: FormData) {
@@ -47,16 +84,10 @@ export async function importClientsFile(formData: FormData) {
 
   let rows: Record<string, string>[] = [];
   try {
-    rows = parseFile(await file.arrayBuffer(), file.name);
+    rows = parseFile(await file.arrayBuffer());
   } catch {
     redirect("/importacion?error=No%20se%20pudo%20leer%20el%20archivo");
   }
-
-  const clean = rows
-    .filter((row) => (row.full_name || row.nombre_completo || "").trim())
-    .slice(0, 1000);
-
-  if (!clean.length) redirect("/importacion?error=No%20se%20encontraron%20filas%20válidas%20con%20nombre");
 
   const get = (row: Record<string, string>, ...names: string[]) => {
     for (const name of names) {
@@ -66,66 +97,75 @@ export async function importClientsFile(formData: FormData) {
     return "";
   };
 
-  const dniValues = clean.map((row) => get(row, "dni")).filter(Boolean);\n  const existingDnis = new Set<string>();\n  const existingCodes = new Set<string>();
+  const clean = rows
+    .filter((row) => get(row, "full_name", "nombre_completo", "nombre"))
+    .slice(0, 1000);
 
-  if (dniValues.length) {
-    const { data: existing } = await supabase
-      .from("clients")
-      .select("dni")
-      .eq("organization_id", organizationId)
-      .not("dni", "is", null)
-      .limit(5000);
+  if (!clean.length) redirect("/importacion?error=No%20se%20encontraron%20filas%20válidas%20con%20nombre");
 
-    for (const item of existing ?? []) {
-      if (item.dni) existingDnis.add(String(item.dni).trim());
-    }
+  const { data: existing } = await supabase
+    .from("clients")
+    .select("dni,client_code")
+    .eq("organization_id", organizationId)
+    .limit(5000);
+
+  const existingDnis = new Set<string>();
+  const existingCodes = new Set<string>();
+  for (const item of existing ?? []) {
+    if (item.dni) existingDnis.add(String(item.dni).trim());
+    if (item.client_code) existingCodes.add(String(item.client_code).trim());
   }
 
   const seenDnis = new Set(existingDnis);
+  const seenCodes = new Set(existingCodes);
+
   const payload = clean.flatMap((row) => {
+    const sourceCode = get(row, "id_cliente", "codigo_cliente", "codigo");
     const dni = get(row, "dni");
+
     if (dni && seenDnis.has(dni)) return [];
+    if (sourceCode && seenCodes.has(sourceCode)) return [];
+
     if (dni) seenDnis.add(dni);
+    if (sourceCode) seenCodes.add(sourceCode);
 
     return [{
+      client_code: /^VT-\d{1,8}$/i.test(sourceCode) ? sourceCode.toUpperCase() : "",
       full_name: get(row, "full_name", "nombre_completo", "nombre"),
-      dni: dni || null,
-      phone: get(row, "phone", "telefono", "teléfono") || null,
-      whatsapp: get(row, "whatsapp", "celular") || null,
-      email: get(row, "email", "correo") || null,
-      district: get(row, "district", "distrito") || null,
-      preferred_channel: get(row, "preferred_channel", "canal_preferido", "canal") || null,
+      dni,
+      phone: get(row, "phone", "telefono", "teléfono"),
+      whatsapp: get(row, "whatsapp", "celular"),
+      email: get(row, "email", "correo"),
+      district: get(row, "district", "distrito"),
+      preferred_channel: get(row, "preferred_channel", "canal_preferido", "canal"),
       marketing_opt_in: truthy(get(row, "marketing_opt_in", "autorizacion", "autorizado")),
-      organization_id: organizationId,
-      branch_id: branchId
+      status: mapClientStatus(get(row, "estado_de_cliente", "estado_cliente", "status")),
+      client_type: get(row, "tipo_de_cliente", "tipo_cliente", "client_type"),
+      last_purchase_at: optionalDate(get(row, "fecha_ultima_compra", "ultima_compra", "last_purchase_at")),
+      purchase_type: get(row, "tipo_de_compra", "purchase_type"),
+      frame_characteristics: get(row, "marca_caracteristicas_de_monturas", "marca_caracteristicas_monturas", "monturas", "frame_characteristics"),
+      lens_characteristics: get(row, "caracteristicas_de_lunas", "lunas", "lens_characteristics"),
+      frame_amount: numberValue(get(row, "monto_monturas", "monto_montura", "frame_amount")),
+      lens_amount: numberValue(get(row, "monto_lunas", "monto_luna", "lens_amount")),
+      total_amount: numberValue(get(row, "monto_total_de_compra", "monto_total", "total_amount")),
+      visit_count: integerValue(get(row, "compras_visitas", "compras", "visitas", "visit_count")),
+      next_action: get(row, "proxima_accion", "próxima_accion", "next_action"),
+      observations: get(row, "observaciones", "notes")
     }];
   });
 
   if (!payload.length) redirect("/importacion?error=No%20hay%20clientes%20nuevos%20para%20importar");
 
-  const { error } = await supabase.from("clients").insert(payload);
-  if (error) redirect("/importacion?error=No%20se%20pudo%20importar%20el%20archivo");
+  const { data, error } = await supabase.rpc("import_clients_transaction", {
+    target_org: organizationId,
+    target_branch: branchId,
+    rows: payload
+  });
 
-  redirect("/importacion?imported=" + encodeURIComponent(String(payload.length)));
-}
+  if (error) redirect("/importacion?error=" + encodeURIComponent(error.message || "No se pudo importar la cartera"));
 
-
-function parseOptionalDate(value: string) {
-  const raw = value.trim();
-  if (!raw) return "";
-  const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
-}
-
-function numberValue(value: string) {
-  const normalized = value.replace(",", ".").trim();
-  if (!normalized) return 0;
-  const n = Number(normalized);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function booleanValue(value: string) {
-  return ["true", "1", "si", "sí", "yes", "x", "sí"].includes(value.trim().toLowerCase());
+  const result = typeof data === "object" && data ? data as { imported?: number; skipped?: number } : {};
+  redirect("/importacion?imported=" + encodeURIComponent(String(result.imported ?? payload.length)) + "&skipped=" + encodeURIComponent(String(result.skipped ?? 0)));
 }
 
 export async function importInventoryFile(formData: FormData) {
@@ -218,3 +258,4 @@ export async function importInventoryFile(formData: FormData) {
   const result = typeof data === "object" && data ? data as { imported?: number; skipped?: number } : {};
   redirect("/importacion?inventory_imported=" + encodeURIComponent(String(result.imported ?? deduped.length)) + "&inventory_skipped=" + encodeURIComponent(String(result.skipped ?? 0)));
 }
+
