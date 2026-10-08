@@ -23,7 +23,12 @@ export async function createOrder(formData:FormData){
   const lab=String(formData.get("lab")??"").trim();
   const labReference=String(formData.get("lab_reference")??"").trim();
   const lensType=String(formData.get("lens_type")??"").trim();
-  const treatments=String(formData.get("treatments")??"").trim();
+  const treatmentOptions=formData.getAll("treatment_option").map((value)=>String(value).trim()).filter(Boolean);
+  const otherTreatments=String(formData.get("treatments_other")??"").trim();
+  const treatments=[...new Set([...treatmentOptions,...(otherTreatments?[otherTreatments]:[])])].join(" · ");
+  const lensDiameterRaw=String(formData.get("lens_diameter_mm")??"").trim();
+  const lensDiameter=lensDiameterRaw?Number(lensDiameterRaw):null;
+  const lensTintColor=String(formData.get("lens_tint_color")??"").trim();
   const lensDesign=String(formData.get("lens_design")??"").trim();
   const lensMaterial=String(formData.get("lens_material")??"").trim();
   const lensIndex=String(formData.get("lens_index")??"").trim();
@@ -35,19 +40,30 @@ export async function createOrder(formData:FormData){
     pd_binocular:String(formData.get("pd_binocular")??"").trim()||null,
     pd_od:String(formData.get("pd_od")??"").trim()||null,
     pd_os:String(formData.get("pd_os")??"").trim()||null,
+    pd_near_binocular:String(formData.get("pd_near_binocular")??"").trim()||null,
+    pd_near_od:String(formData.get("pd_near_od")??"").trim()||null,
+    pd_near_os:String(formData.get("pd_near_os")??"").trim()||null,
     height_od:String(formData.get("height_od")??"").trim()||null,
     height_os:String(formData.get("height_os")??"").trim()||null,
+    working_distance_cm:String(formData.get("working_distance_cm")??"").trim()||null,
     vertex:String(formData.get("vertex")??"").trim()||null,
     pantoscopic:String(formData.get("pantoscopic")??"").trim()||null,
     wrap:String(formData.get("wrap")??"").trim()||null,
     frame_a:String(formData.get("frame_a")??"").trim()||null,
     frame_b:String(formData.get("frame_b")??"").trim()||null,
+    frame_ed:String(formData.get("frame_ed")??"").trim()||null,
     frame_dbl:String(formData.get("frame_dbl")??"").trim()||null,
-    frame_temple:String(formData.get("frame_temple")??"").trim()||null
+    frame_temple:String(formData.get("frame_temple")??"").trim()||null,
+    frame_front_width:String(formData.get("frame_front_width")??"").trim()||null,
+    mounting_type:String(formData.get("mounting_type")??"").trim()||null,
+    frame_reference:String(formData.get("frame_reference")??"").trim()||null,
+    measurement_notes:String(formData.get("measurement_notes")??"").trim()||null
   };
 
   if(!clientId) redirect("/pedidos?error=El%20cliente%20es%20obligatorio");
   if(!["received","in_preparation","at_lab","ready"].includes(status)) redirect("/pedidos?error=Estado%20inválido");
+  if(lensDiameter!==null&&(!Number.isFinite(lensDiameter)||lensDiameter<=0||lensDiameter>120)) redirect("/pedidos?error=Revisa%20el%20diámetro%20mínimo%20de%20lente");
+  if(lensDiameterRaw&&!Number.isFinite(Number(lensDiameterRaw))) redirect("/pedidos?error=El%20diámetro%20de%20lente%20debe%20ser%20numérico");
 
   if(saleId){
     const {data:sale}=await supabase.from("sales").select("id,client_id,organization_id,branch_id").eq("id",saleId).maybeSingle();
@@ -66,7 +82,8 @@ export async function createOrder(formData:FormData){
   const {data:createdOrder,error}=await supabase.from("optical_orders").insert({
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
     status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,
-    lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,treatments:treatments||null,measurements,
+    lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,
+    lens_diameter_mm:lensDiameter,lens_tint_color:lensTintColor||null,treatments:treatments||null,measurements,
     promised_at:promisedAtRaw?new Date(promisedAtRaw).toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     notes:notes||null,organization_id:organizationId,branch_id:branchId
