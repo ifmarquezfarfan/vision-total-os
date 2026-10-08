@@ -122,7 +122,7 @@ export default async function InventoryPage({
                     const stock=productStock.get(p.id);
                     const qty=stock?.quantity ?? Number(p.stock_qty||0);
                     return <tr key={p.id}>
-                      <td><strong>{p.product_code}</strong></td>
+                      <td><Link href={"/inventario/"+p.id} className="link-strong">{p.product_code}</Link></td>
                       <td>{[p.brand,p.model].filter(Boolean).join(" ")||p.description||"Sin descripción"}</td>
                       <td>{[p.color,p.material].filter(Boolean).join(" · ")||"·"}</td>
                       <td>S/ {Number(p.sale_price).toFixed(2)}</td>
