@@ -54,7 +54,7 @@ export default async function SalesPage({searchParams}:{searchParams:Promise<{er
       </form></section>
       <section className="section"><div className="spread"><h2>Últimas ventas</h2><Link href="/reportes" className="link-strong">Ver análisis</Link></div>
         <div className="table-wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>
-          {(sales??[]).map(s=><tr key={s.id}><td><Link href={"/ventas/"+s.id} className="link-strong">{s.sale_code}</Link></td><td>{new Date(s.sale_at).toLocaleString("es-PE")}</td><td>{s.client_id?clientMap.get(s.client_id)||"Cliente":"Mostrador"}</td><td>S/ {Number(s.total).toFixed(2)}</td><td>S/ {Number(s.paid_amount).toFixed(2)}</td><td>S/ {Number(s.balance_due).toFixed(2)}</td><td>{s.payment_status}</td></tr>)}
+          {(sales??[]).map(s=><tr key={s.id}><td><Link href={"/ventas/"+s.id} className="link-strong">{s.sale_code}</Link></td><td>{new Date(s.sale_at).toLocaleString("es-PE")}</td><td>{s.client_id?clientMap.get(s.client_id)||"Cliente":"Mostrador"}</td><td>S/ {Number(s.total).toFixed(2)}</td><td>S/ {Number(s.paid_amount).toFixed(2)}</td><td>S/ {Number(s.balance_due).toFixed(2)}</td><td><span className={`status-badge ${s.payment_status==="paid"?"status-success":s.payment_status==="partial"?"status-warning":s.payment_status==="voided"?"status-danger":"status-neutral"}`}>{({paid:"Pagada",partial:"Parcial",pending:"Pendiente",voided:"Anulada"} as Record<string,string>)[s.payment_status]||s.payment_status}</span></td></tr>)}
           {!sales?.length&&<tr><td colSpan={7} className="muted">Todavía no hay ventas.</td></tr>}
         </tbody></table></div>
       </section>
