@@ -66,8 +66,8 @@ export async function importClientsFile(formData: FormData) {
     return "";
   };
 
-  const dniValues = clean.map((row) => get(row, "dni")).filter(Boolean);
-  const existingDnis = new Set<string>();
+  const dniValues = clean.map((row) => get(row, "dni")).filter(Boolean);\n  const sourceCodes = clean.map((row) => get(row, "id_cliente", "id_cliente", "codigo_cliente", "codigo")).filter(Boolean);
+  const existingDnis = new Set<string>();\n  const existingCodes = new Set<string>();
 
   if (dniValues.length) {
     const { data: existing } = await supabase
