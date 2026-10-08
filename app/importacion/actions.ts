@@ -24,21 +24,21 @@ function parseFile(buffer: ArrayBuffer): Record<string, string>[] {
   const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   if (!firstSheet) return [];
+
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
 
   return rows.map((row) => {
     const normalized: Record<string, string> = {};
     for (const [rawKey, rawValue] of Object.entries(row)) {
       const normalizedKey = key(rawKey);
+
       if (rawValue instanceof Date) {
         normalized[normalizedKey] = rawValue.toISOString();
       } else if (typeof rawValue === "number" && /fecha|date|at$/.test(normalizedKey)) {
         const parsed = XLSX.SSF.parse_date_code(rawValue);
-        if (parsed) {
-          normalized[normalizedKey] = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, parsed.S || 0)).toISOString();
-        } else {
-          normalized[normalizedKey] = String(rawValue);
-        }
+        normalized[normalizedKey] = parsed
+          ? new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, parsed.S || 0)).toISOString()
+          : String(rawValue);
       } else {
         normalized[normalizedKey] = String(rawValue ?? "").trim();
       }
@@ -52,7 +52,7 @@ function truthy(value: string) {
 }
 
 function numberValue(value: string) {
-  const normalized = value.replace(/[^0-9.,-]/g,"").replace(",", ".").trim();
+  const normalized = value.replace(/[^0-9.,-]/g, "").replace(",", ".").trim();
   if (!normalized) return 0;
   const n = Number(normalized);
   return Number.isFinite(n) ? n : 0;
@@ -127,10 +127,15 @@ export async function importClientsFile(formData: FormData) {
     if (sourceCode && seenCodes.has(sourceCode)) return [];
 
     if (dni) seenDnis.add(dni);
-    if (sourceCode) seenCodes.add(sourceCode);
+
+    const safeCode = /^VT-\d{1,8}$/i.test(sourceCode) && !seenCodes.has(sourceCode)
+      ? sourceCode.toUpperCase()
+      : "";
+
+    if (safeCode) seenCodes.add(safeCode);
 
     return [{
-      client_code: /^VT-\d{1,8}$/i.test(sourceCode) ? sourceCode.toUpperCase() : "",
+      client_code: safeCode,
       full_name: get(row, "full_name", "nombre_completo", "nombre"),
       dni,
       phone: get(row, "phone", "telefono", "teléfono"),
@@ -149,7 +154,7 @@ export async function importClientsFile(formData: FormData) {
       lens_amount: numberValue(get(row, "monto_lunas", "monto_luna", "lens_amount")),
       total_amount: numberValue(get(row, "monto_total_de_compra", "monto_total", "total_amount")),
       visit_count: integerValue(get(row, "compras_visitas", "compras", "visitas", "visit_count")),
-      next_action: get(row, "proxima_accion", "próxima_accion", "next_action"),
+      next_action: get(row, "proxima_accion", "proxima_acción", "next_action"),
       observations: get(row, "observaciones", "notes")
     }];
   });
@@ -177,7 +182,7 @@ export async function importInventoryFile(formData: FormData) {
 
   let rows: Record<string, string>[] = [];
   try {
-    rows = parseFile(await file.arrayBuffer(), file.name);
+    rows = parseFile(await file.arrayBuffer());
   } catch {
     redirect("/importacion?error=No%20se%20pudo%20leer%20el%20inventario");
   }
@@ -190,11 +195,13 @@ export async function importInventoryFile(formData: FormData) {
     return "";
   };
 
-  const clean = rows.slice(0, 1000).filter((row) =>
-    get(row, "id_del_articulo", "id_articulo", "codigo", "codigo_producto", "product_code") ||
-    get(row, "marca", "brand") ||
-    get(row, "modelo_referencia", "modelo", "model")
-  );
+  const clean = rows
+    .filter((row) =>
+      get(row, "id_del_articulo", "id_articulo", "codigo", "codigo_producto", "product_code") ||
+      get(row, "marca", "brand") ||
+      get(row, "modelo_referencia", "modelo", "model")
+    )
+    .slice(0, 1000);
 
   if (!clean.length) redirect("/importacion?error=No%20se%20encontraron%20filas%20válidas%20de%20inventario");
 
@@ -209,7 +216,7 @@ export async function importInventoryFile(formData: FormData) {
 
   const payload = clean.flatMap((row) => {
     const rawCode = get(row, "id_del_articulo", "id_articulo", "codigo", "codigo_producto", "product_code");
-    const code = rawCode && !seenCodes.has(rawCode) && !existingCodes.has(rawCode) ? rawCode : "";
+    if (rawCode && (seenCodes.has(rawCode) || existingCodes.has(rawCode))) return [];
     if (rawCode) seenCodes.add(rawCode);
 
     const rawCategory = get(row, "tipo_de_producto", "tipo_producto", "categoria", "category");
@@ -218,10 +225,11 @@ export async function importInventoryFile(formData: FormData) {
       /luna|lente/i.test(rawCategory) ? "Lentes" :
       /tratamiento/i.test(rawCategory) ? "Tratamiento" :
       /accesorio/i.test(rawCategory) ? "Accesorio" :
-      /servicio/i.test(rawCategory) ? "Servicio" : (rawCategory || "Montura");
+      /servicio/i.test(rawCategory) ? "Servicio" :
+      (rawCategory || "Montura");
 
     return [{
-      product_code: code,
+      product_code: /^MON-\d{1,8}$/i.test(rawCode) ? rawCode.toUpperCase() : "",
       brand: get(row, "marca", "brand"),
       model: get(row, "modelo_referencia", "modelo", "referencia", "model"),
       category,
@@ -230,32 +238,26 @@ export async function importInventoryFile(formData: FormData) {
       material: get(row, "material"),
       cost: numberValue(get(row, "precio_de_costo", "costo", "cost")),
       sale_price: numberValue(get(row, "precio_de_venta_actual", "precio_venta", "sale_price", "precio")),
-      quantity: Math.max(0, Math.floor(numberValue(get(row, "unidades", "stock", "cantidad")))),
-      min_stock: Math.max(0, Math.floor(numberValue(get(row, "stock_minimo", "min_stock")))),
+      quantity: integerValue(get(row, "unidades", "stock", "cantidad")),
+      min_stock: integerValue(get(row, "stock_minimo", "min_stock")),
       legacy_location: get(row, "ubicacion_actual", "ubicacion", "location"),
-      displayed: booleanValue(get(row, "exhibida", "exhibido", "displayed")),
+      displayed: truthy(get(row, "exhibida", "exhibido", "displayed")),
       physical_status: get(row, "estado_fisico", "estado") || "Bueno",
       notes: get(row, "observaciones", "notas", "notes"),
-      entry_at: parseOptionalDate(get(row, "fecha_de_ingreso", "fecha_ingreso", "entry_at"))
+      entry_at: optionalDate(get(row, "fecha_de_ingreso", "fecha_ingreso", "entry_at"))
     }];
   });
 
-  const deduped = payload.filter((row, index) => {
-    const code = row.product_code;
-    return !code || payload.findIndex((candidate) => candidate.product_code === code) === index;
-  });
-
-  if (!deduped.length) redirect("/importacion?error=No%20hay%20artículos%20nuevos%20para%20importar");
+  if (!payload.length) redirect("/importacion?error=No%20hay%20artículos%20nuevos%20para%20importar");
 
   const { data, error } = await supabase.rpc("import_inventory_transaction", {
     target_org: organizationId,
     target_branch: branchId,
-    rows: deduped
+    rows: payload
   });
 
   if (error) redirect("/importacion?error=" + encodeURIComponent(error.message || "No se pudo importar el inventario"));
 
   const result = typeof data === "object" && data ? data as { imported?: number; skipped?: number } : {};
-  redirect("/importacion?inventory_imported=" + encodeURIComponent(String(result.imported ?? deduped.length)) + "&inventory_skipped=" + encodeURIComponent(String(result.skipped ?? 0)));
+  redirect("/importacion?inventory_imported=" + encodeURIComponent(String(result.imported ?? payload.length)) + "&inventory_skipped=" + encodeURIComponent(String(result.skipped ?? 0)));
 }
-
