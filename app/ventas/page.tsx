@@ -36,7 +36,7 @@ export default async function SalesPage({
   const [{ data: clients }, { data: leads }, { data: products }, { data: sales }] = await Promise.all([
     supabase.from("clients").select("id,full_name,dni").order("full_name").limit(300),
     supabase.from("leads").select("id,lead_code,full_name,client_id,stage").not("stage","eq","lost").order("created_at",{ascending:false}).limit(300),
-    supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price,stock_qty").eq("active",true).order("brand").limit(500),
+    supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price,stock_qty,inventory_mode").eq("active",true).order("brand").limit(500),
     supabase.from("sales").select("id,sale_code,sale_at,client_id,lead_id,subtotal,discount,total,paid_amount,balance_due,payment_status,payment_method,responsible").order("sale_at",{ascending:false}).limit(100)
   ]);
 
