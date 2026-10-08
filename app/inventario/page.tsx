@@ -87,7 +87,7 @@ export default async function InventoryPage({
                   <div className="field"><label>Descripción</label><input name="description" placeholder="Forma, detalles, etc." /></div>
                   <div className="field"><label>Costo</label><input name="cost" type="number" min="0" step="0.01" /></div>
                   <div className="field"><label>Precio de venta</label><input name="sale_price" type="number" min="0" step="0.01" /></div>
-                  <div className="field"><label>Stock inicial</label><input name="initial_stock" type="number" min="0" step="1" defaultValue="0" /></div>
+                  <div className="field"><label>Modo de inventario</label><select name="inventory_mode" defaultValue="stock"><option value="stock">Stock físico</option><option value="on_demand">Por pedido / bajo demanda</option><option value="service">Servicio, sin stock</option></select></div>\n                  <div className="field"><label>Stock inicial</label><input name="initial_stock" type="number" min="0" step="1" defaultValue="0" /></div>
                   <div className="field"><label>Estado físico</label><select name="physical_status" defaultValue="Bueno"><option>Bueno</option><option>Regular</option><option>Dañado</option><option>Baja</option><option>Otro</option></select></div>
                   <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date" /></div>
                 </div>
@@ -116,7 +116,7 @@ export default async function InventoryPage({
             </div>
             <div className="table-wrap" style={{marginTop:14}}>
               <table style={{minWidth:1200}}>
-                <thead><tr><th>Código</th><th>Producto</th><th>Detalle</th><th>Venta</th><th>Stock</th><th>Ubicación</th><th>Exhibida</th><th>Estado físico</th><th>Ingreso</th><th></th></tr></thead>
+                <thead><tr><th>Código</th><th>Producto</th><th>Detalle</th><th>Venta</th><th>Modo</th><th>Stock</th><th>Ubicación</th><th>Exhibida</th><th>Estado físico</th><th>Ingreso</th><th></th></tr></thead>
                 <tbody>
                   {(products??[]).map(p=>{
                     const stock=productStock.get(p.id);
@@ -133,7 +133,7 @@ export default async function InventoryPage({
                       <td>{p.entry_at?new Date(p.entry_at).toLocaleDateString("es-PE"):"·"}</td>
                     </tr>
                   })}
-                  {!products?.length&&<tr><td colSpan={10} className="muted">{q?"No se encontró ningún producto.":"Todavía no hay productos."}</td></tr>}
+                  {!products?.length&&<tr><td colSpan={11} className="muted">{q?"No se encontró ningún producto.":"Todavía no hay productos."}</td></tr>}
                 </tbody>
               </table>
             </div>
