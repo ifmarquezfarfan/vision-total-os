@@ -16,12 +16,13 @@ export default async function ClientDetailPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: client }, { data: sales }, { data: followUps }, { data: leads }, { data: prescriptions }, { data: membership }, { data: branch }] = await Promise.all([
+  const [{ data: client }, { data: sales }, { data: followUps }, { data: leads }, { data: prescriptions }, { data: historySnapshots }, { data: membership }, { data: branch }] = await Promise.all([
     supabase.from("clients").select("id, client_code, full_name, dni, phone, whatsapp, email, district, preferred_channel, marketing_opt_in, status, created_at, last_purchase_at, last_contact_at, next_action, next_action_at, notes").eq("id", id).maybeSingle(),
     supabase.from("sales").select("id, sale_code, sale_at, total, payment_status").eq("client_id", id).order("sale_at", { ascending: false }).limit(20),
     supabase.from("follow_ups").select("id, followup_code, followup_type, channel, result, next_action, next_action_at, status, created_at").eq("client_id", id).order("created_at", { ascending: false }).limit(20),
     supabase.from("leads").select("id, lead_code, stage, product_interest, estimated_amount, created_at").eq("client_id", id).order("created_at", { ascending: false }).limit(20),
     supabase.from("prescriptions").select("id, exam_at, expires_at, od_sphere, od_cylinder, od_axis, od_add, os_sphere, os_cylinder, os_axis, os_add, pd, notes, created_at").eq("client_id", id).order("exam_at", { ascending: false }).limit(10),
+    supabase.from("client_history_snapshots").select("id,last_purchase_at,purchase_type,frame_characteristics,lens_characteristics,frame_amount,lens_amount,total_amount,client_type,visit_count,next_action,observations,imported_at").eq("client_id",id).order("imported_at",{ascending:false}).limit(10),
     supabase.from("organization_members").select("organization_id, role").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle(),
     supabase.from("branch_members").select("branch_id, role").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle()
   ]);
