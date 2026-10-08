@@ -27,6 +27,10 @@ export async function Sidebar() {
       </div>
 
       <nav className="nav">
+        <div className="nav-group nav-help">
+          <span>Ayuda</span>
+          <Link href="/guia">Guía y capacitación</Link>
+        </div>
         <div className="nav-group">
           <span>Operación</span>
           <Link href="/dashboard">Dashboard</Link>
