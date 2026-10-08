@@ -24,7 +24,7 @@ export default async function FinancePage({
     supabase.from("sale_payments").select("id,sale_id,amount,paid_at,payment_method").gte("paid_at", start).limit(1000),
     supabase.from("purchases").select("id,total,payment_status,purchase_at").gte("purchase_at", start).limit(1000),
     supabase.from("purchase_payments").select("id,purchase_id,amount,paid_at,payment_method").gte("paid_at", start).limit(1000),
-    supabase.from("expenses").select("id,expense_at,amount,status,category").gte("expense_at", start).limit(1000),
+    supabase.from("expenses").select("id,expense_code,expense_at,amount,status,category,description,supplier_name,payment_method,notes").gte("expense_at", start).limit(1000),
     supabase.from("sale_items").select("sale_id,quantity,unit_cost,line_total").limit(3000)
   ]);
 
