@@ -73,7 +73,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
           <div className="field"><label>Tratamientos OI</label><div className="check-grid">{["Antirreflejo","Filtro UV","Filtro azul","Fotocromático","Polarizado","Antirrayas","Hidrofóbico","Oleofóbico","Espejado"].map(value=><label className="checkline" key={value}><input type="checkbox" name="lens_coatings_oi" value={value} defaultChecked={(opticalConfig.oi?.coatings??[]).includes(value)}/>{value}</label>)}</div></div>
         </div>
       </div>
-      <p className="field-hint">Estos datos quedan guardados en la cotización y pasan al pedido óptico. Antes de enviar al laboratorio, confirma disponibilidad, índices, PHI y compatibilidad con el proveedor.</p>
+      <p className="field-hint">Los precios que ves dentro del selector son referencias del catálogo. El total final se calcula con las líneas económicas de la cotización. Comprueba que la línea de lunas refleje la combinación OD/OI acordada y no duplique un precio por par. Estos datos quedan guardados y pasarán al pedido óptico.</p>
     </section>}
 
     <section id="nueva-cotizacion" className="card section quote-form-card">
