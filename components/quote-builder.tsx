@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 
-type Product={id:string;product_code:string;category:string|null;brand:string|null;model:string|null;description:string|null;cost:number;sale_price:number};
+type Product={id:string;product_code:string;category:string|null;brand:string|null;model:string|null;description:string|null;cost:number;sale_price:number;lens_design?:string|null;lens_material?:string|null;lens_index?:number|string|null;lens_phi_mm?:number|string|null;lens_coatings?:string[]|null;lens_sphere_min?:number|string|null;lens_sphere_max?:number|string|null;lens_cylinder_min?:number|string|null;lens_cylinder_max?:number|string|null};
 type Row={id:number;productId:string;productText:string;componentType:string;description:string;quantity:number;price:string;cost:string;discount:string};
 type InitialItem={product_id:string|null;component_type:string;description:string;quantity:number;unit_price:number|string;unit_cost:number|string;discount:number|string};
 
@@ -19,7 +19,11 @@ export function QuoteBuilder({products}:{products:Product[]}) {
     const p=codeMap.get(text.trim().toLowerCase());
     if(!p){update(id,{productId:"",productText:text});return;}
     const componentType=p.category?.toLowerCase().includes("montura")?"frame":p.category?.toLowerCase().includes("lente")?"lens":"other";
-    update(id,{productId:p.id,productText:p.product_code,componentType,description:p.description||[p.brand,p.model].filter(Boolean).join(" "),price:Number(p.sale_price||0).toFixed(2),cost:Number(p.cost||0).toFixed(2)});
+    const technicalDetails = p.category?.toLowerCase().includes("lente")
+      ? [p.lens_design,p.lens_material,p.lens_index!=null?"índice "+Number(p.lens_index).toFixed(2):null,p.lens_phi_mm!=null?"PHI "+p.lens_phi_mm+" mm":null,...(p.lens_coatings??[])].filter(Boolean).join(" · ")
+      : "";
+    const description=[p.description||[p.brand,p.model].filter(Boolean).join(" "),technicalDetails].filter(Boolean).join(" · ");
+    update(id,{productId:p.id,productText:p.product_code,componentType,description,price:Number(p.sale_price||0).toFixed(2),cost:Number(p.cost||0).toFixed(2)});
   };
   const replacePreset=(types:string[])=>setRows(types.map((componentType,i)=>({...emptyRow(i+1),componentType,description:componentType==="frame"?"Montura":componentType==="lens"?"Lunas":componentType==="treatment"?"Tratamiento":""})));
   const addBlock=()=>setRows(cur=>{
