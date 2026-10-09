@@ -18,6 +18,8 @@ type SharedQuote = {
   quote_at:string;
   expires_at:string|null;
   share_expires_at:string|null;
+  subtotal:number|string;
+  discount:number|string;
   total:number|string;
   items:SharedItem[];
 };
@@ -74,6 +76,10 @@ export default async function PublicQuotePage({params}:{params:Promise<{token:st
           </tr>)}
           {!quote.items.length&&<tr><td colSpan={5}>No hay componentes visibles en esta propuesta.</td></tr>}
         </tbody></table></div>
+        <div className="public-quote-total-breakdown">
+          <div><span>Subtotal de componentes</span><strong>{currency(quote.subtotal)}</strong></div>
+          {Number(quote.discount||0)>0&&<div><span>Descuento de cotización</span><strong>− {currency(quote.discount)}</strong></div>}
+        </div>
         <div className="public-quote-total"><span>{isFinal?"Total de la cotización final":"Total orientativo"}</span><strong>{currency(total)}</strong></div>
         {!isFinal&&<div className="public-quote-provisional"><strong>Importante: precio referencial</strong><p>Este es el presupuesto inicial. La graduación, el centrado y las especificaciones definitivas se confirmarán después de recibir las medidas del profesional externo. El precio podría ajustarse antes de fabricar las lunas.</p></div>}
         {isFinal&&<div className="public-quote-confirmed"><strong>Propuesta final</strong><p>Revisa las líneas y el precio total. La fabricación se coordinará cuando confirmes la compra con la óptica.</p></div>}
