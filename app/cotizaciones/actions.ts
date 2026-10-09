@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -356,4 +357,53 @@ export async function deleteQuote(formData: FormData) {
 
   if (error) redirect("/cotizaciones?error=No%20se%20pudo%20eliminar%20la%20cotización");
   redirect("/cotizaciones?deleted=1");
+}
+
+
+export async function shareQuote(formData: FormData) {
+  const id = String(formData.get("quote_id") ?? "").trim();
+  if (!id) redirect("/cotizaciones?error=Cotización%20inválida");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+
+  const { data: quote } = await supabase.from("quotes")
+    .select("id,status,expires_at")
+    .eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle();
+  if (!quote) redirect("/cotizaciones?error=Cotización%20no%20encontrada");
+  if (["cancelled","rejected","expired"].includes(quote.status)) redirect("/cotizaciones?error=No%20se%20puede%20compartir%20una%20cotización%20cerrada");
+
+  const now = Date.now();
+  const sevenDays = now + 7 * 24 * 60 * 60 * 1000;
+  const quoteExpiry = quote.expires_at ? new Date(quote.expires_at).getTime() : sevenDays;
+  if (!Number.isFinite(quoteExpiry) || quoteExpiry <= now) redirect("/cotizaciones?error=La%20cotización%20está%20vencida");
+  const expiresAt = new Date(Math.min(sevenDays, quoteExpiry)).toISOString();
+  const token = randomUUID() + randomUUID().replaceAll("-","");
+  const { error } = await supabase.from("quotes").update({
+    share_token: token,
+    share_enabled: true,
+    share_expires_at: expiresAt,
+    updated_at: new Date().toISOString()
+  }).eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
+  if (error) redirect("/cotizaciones?error=No%20se%20pudo%20crear%20el%20enlace");
+  redirect("/cotizaciones?share_quote="+encodeURIComponent(id));
+}
+
+export async function revokeQuoteShare(formData: FormData) {
+  const id = String(formData.get("quote_id") ?? "").trim();
+  if (!id) redirect("/cotizaciones?error=Cotización%20inválida");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+  const { error } = await supabase.from("quotes").update({share_enabled:false,updated_at:new Date().toISOString()})
+    .eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
+  if (error) redirect("/cotizaciones?error=No%20se%20pudo%20desactivar%20el%20enlace");
+  redirect("/cotizaciones?revoked=1");
 }
