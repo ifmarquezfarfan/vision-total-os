@@ -65,7 +65,7 @@ export default async function DashboardPage() {
           </div>
 
           <QuickStart title="¿Qué hago ahora?" hint="Abre el módulo según la acción que quieras completar, no según dónde recuerdes haber visto el dato." items={[
-      {label:"Registrar venta",href:"/ventas",description:"Caja + productos + pago",tone:"green"},
+      {label:"Iniciar atención",href:"/atencion",description:"Cliente → cotización → medición → pago",tone:"green"},
       {label:"Crear pedido óptico",href:"/pedidos",description:"Receta + lunas + laboratorio",tone:"purple"},
       {label:"Revisar agenda",href:"/seguimientos",description:"Próximas acciones",tone:"orange"},
       {label:"Revisar stock",href:"/inventario",description:"Qué hay y qué falta",tone:"blue"}
