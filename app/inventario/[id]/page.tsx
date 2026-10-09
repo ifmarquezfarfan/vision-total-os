@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { updateProduct } from "./actions";
 import { QuickStart } from "@/components/quick-start";
+import { LensProductFields } from "@/components/lens-product-fields";
 
 export default async function ProductDetailPage({
   params,
@@ -23,7 +24,7 @@ export default async function ProductDetailPage({
   if (!membership || !branch) redirect("/onboarding");
 
   const [{ data: product }, { data: stockRows }, { data: locations }, { data: movements }] = await Promise.all([
-    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
+    supabase.from("products").select("id,product_code,category,brand,model,description,color,material,cost,sale_price,stock_qty,min_stock,location,displayed,physical_status,entry_at,notes,inventory_mode,lens_design,lens_material,lens_index,lens_phi_mm,lens_coatings,lens_prism_capable,lens_sphere_min,lens_sphere_max,lens_cylinder_min,lens_cylinder_max,created_at,updated_at,active").eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
     supabase.from("inventory_stock").select("location_id,quantity").eq("product_id",id).limit(100),
     supabase.from("inventory_locations").select("id,name").eq("branch_id",branch.branch_id).eq("active",true).order("created_at"),
     supabase.from("inventory_movements").select("id,quantity,movement_type,note,created_at").eq("product_id",id).eq("branch_id",branch.branch_id).order("created_at",{ascending:false}).limit(30),
@@ -47,7 +48,19 @@ export default async function ProductDetailPage({
   {label:"Ver movimientos",href:"#movimientos",description:"Entradas y salidas",tone:"orange"},
   {label:"Volver al catálogo",href:"/inventario",description:"Continuar operación",tone:"purple"}
 ]}/>
-<section className="card section"><div className="eyebrow">Ficha del producto</div><h2>{[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}</h2><p className="muted">{product.color||"Color no registrado"} · {product.material||"Material no registrado"}</p><span className="field-hint">La carga de fotografías se habilitará en una siguiente etapa.</span></section>
+<section className="card section"><div className="eyebrow">Ficha del producto</div><h2>{[product.brand,product.model].filter(Boolean).join(" ")||product.product_code}</h2><p className="muted">{product.color||"Color no registrado"} · {product.material||"Material no registrado"}</p><span className="field-hint">La carga de fotografías se habilitará en una siguiente etapa.</span>{product.category==="Lentes"&&<p style={{marginTop:12}}><Link href="/buscador-lunas" className="btn btn-primary">Abrir buscador de lunas →</Link></p>}</section>
+      {product.category==="Lentes"&&<section className="card section lens-catalog-overview"><div className="spread"><div><h2 style={{marginBottom:4}}>Ficha técnica óptica</h2><p className="muted">Datos usados por el motor de búsqueda de lunas.</p></div><Link href="/buscador-lunas" className="link-strong">Buscar alternativas</Link></div>
+        <div className="lens-summary-grid">
+          <div><small>Diseño</small><strong>{product.lens_design||"Pendiente"}</strong></div>
+          <div><small>Material</small><strong>{product.lens_material||"Pendiente"}</strong></div>
+          <div><small>Índice</small><strong>{product.lens_index==null?"Pendiente":Number(product.lens_index).toFixed(2)}</strong></div>
+          <div><small>PHI / diámetro</small><strong>{product.lens_phi_mm==null?"Pendiente":Number(product.lens_phi_mm)+" mm"}</strong></div>
+          <div><small>Rango esfera</small><strong>{product.lens_sphere_min==null&&product.lens_sphere_max==null?"Pendiente":`${product.lens_sphere_min==null?"·":Number(product.lens_sphere_min).toFixed(2)} a ${product.lens_sphere_max==null?"·":Number(product.lens_sphere_max).toFixed(2)}`}</strong></div>
+          <div><small>Rango cilindro</small><strong>{product.lens_cylinder_min==null&&product.lens_cylinder_max==null?"Pendiente":`${product.lens_cylinder_min==null?"·":Number(product.lens_cylinder_min).toFixed(2)} a ${product.lens_cylinder_max==null?"·":Number(product.lens_cylinder_max).toFixed(2)}`}</strong></div>
+          <div><small>Prisma</small><strong>{product.lens_prism_capable?"Proveedor lo admite":"Sin confirmar"}</strong></div>
+          <div><small>Tratamientos</small><strong>{(product.lens_coatings??[]).join(" · ")||"No registrados"}</strong></div>
+        </div>
+      </section>}
 {q.error&&<p className="notice" style={{marginTop:18}}>{q.error}</p>}
       {q.updated&&<p className="notice" style={{marginTop:18}}>Producto actualizado.</p>}
 
@@ -76,6 +89,7 @@ export default async function ProductDetailPage({
             <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date" defaultValue={product.entry_at?new Date(product.entry_at).toISOString().slice(0,10):""}/></div>
           </div>
           <label className="checkline"><input type="checkbox" name="displayed" defaultChecked={product.displayed}/> Está exhibida</label>
+          <LensProductFields values={product}/>
           <div className="field"><label>Observaciones</label><input name="notes" defaultValue={product.notes||""}/></div>
           <button className="btn btn-primary">Guardar cambios</button>
         </form>

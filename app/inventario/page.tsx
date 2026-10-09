@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { createProduct, adjustStock, deactivateProduct } from "./actions";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { QuickStart } from "@/components/quick-start";
+import { LensProductFields } from "@/components/lens-product-fields";
 
 export default async function InventoryPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;adjusted?:string;deactivated?:string;q?:string}>}) {
   const supabase=await createClient();
@@ -44,7 +45,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const canManage=membership.role==="owner"||membership.role==="admin";
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Inventario</strong><span className="muted">{user.email}</span></header><div className="content">
-    <div className="spread"><div><h1 className="page-title">Inventario</h1><p className="subtitle">Catálogo, stock, ubicación y estado físico en una sola vista.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/importacion" className="btn btn-secondary">Importar Excel</Link></div></div>
+    <div className="spread"><div><h1 className="page-title">Inventario</h1><p className="subtitle">Catálogo, stock, ubicación y estado físico en una sola vista.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/buscador-lunas" className="btn btn-primary">Buscador de lunas</Link><Link href="/importacion" className="btn btn-secondary">Importar Excel</Link></div></div>
     <QuickStart title="Inicio rápido de inventario" hint="Crear → ubicar → revisar stock → reponer." items={[
       {label:"Nuevo producto",href:"#nuevo-producto",description:"Registra la ficha del artículo",tone:"blue"},
       {label:"Ajustar stock",href:"#ajustar-stock",description:"Entrada o salida controlada",tone:"green"},
@@ -78,6 +79,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
         <div className="field"><label>Fecha de ingreso</label><input name="entry_at" type="date"/></div>
       </div>
       <label className="checkline"><input type="checkbox" name="displayed"/> Está exhibida</label>
+      <LensProductFields />
       <div className="field"><label>Observaciones</label><input name="notes" placeholder="Detalles internos"/></div>
       <button className="btn btn-primary">Crear producto</button>
     </form></div>

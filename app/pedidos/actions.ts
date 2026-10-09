@@ -19,6 +19,7 @@ export async function createOrder(formData:FormData){
   const saleId=String(formData.get("sale_id")??"")||null;
   const prescriptionId=String(formData.get("prescription_id")??"")||null;
   const frameProductId=String(formData.get("frame_product_id")??"")||null;
+  const lensProductId=String(formData.get("lens_product_id")??"")||null;
   const status=String(formData.get("status")??"received");
   const lab=String(formData.get("lab")??"").trim();
   const labReference=String(formData.get("lab_reference")??"").trim();
@@ -89,13 +90,27 @@ export async function createOrder(formData:FormData){
     if(!frame||frame.organization_id!==organizationId||frame.branch_id!==branchId||frame.category!=="Montura") redirect("/pedidos?error=La%20montura%20seleccionada%20no%20es%20válida");
   }
 
+  let catalogLens: {id:string;brand:string|null;description:string|null;lens_design:string|null;lens_material:string|null;lens_index:number|string|null;lens_phi_mm:number|string|null;lens_coatings:string[]|null} | null = null;
+  if(lensProductId){
+    const {data:lens}=await supabase.from("products").select("id,category,organization_id,branch_id,brand,description,lens_design,lens_material,lens_index,lens_phi_mm,lens_coatings").eq("id",lensProductId).eq("active",true).maybeSingle();
+    if(!lens||lens.organization_id!==organizationId||lens.branch_id!==branchId||lens.category!=="Lentes") redirect("/pedidos?error=La%20luna%20seleccionada%20no%20pertenece%20al%20catálogo%20de%20esta%20sucursal");
+    catalogLens=lens;
+  }
+  const finalLensDesign=lensDesign||catalogLens?.lens_design||"";
+  const finalLensMaterial=lensMaterial||catalogLens?.lens_material||"";
+  const finalLensIndex=lensIndex||(catalogLens?.lens_index===null||catalogLens?.lens_index===undefined?"":String(catalogLens.lens_index));
+  const finalLensBrand=lensBrand||catalogLens?.brand||"";
+  const finalLensDiameter=lensDiameter??(catalogLens?.lens_phi_mm===null||catalogLens?.lens_phi_mm===undefined?null:Number(catalogLens.lens_phi_mm));
+  const finalTreatments=treatmentOptions.length||otherTreatments?treatments:(catalogLens?.lens_coatings??[]).join(" · ");
+  const finalLensType=lensType||catalogLens?.lens_design||catalogLens?.description||"";
+
   const code="PED-"+Date.now().toString().slice(-8);
   const {data:createdOrder,error}=await supabase.from("optical_orders").insert({
-    order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
-    status,lab:lab||null,lab_reference:labReference||null,lens_type:lensType||null,lens_design:lensDesign||null,
-    lens_material:lensMaterial||null,lens_index:lensIndex||null,lens_brand:lensBrand||null,
-    lens_diameter_mm:lensDiameter,lens_center_thickness_mm:lensCenterThickness,lens_edge_thickness_mm:lensEdgeThickness,
-    lens_tint_color:lensTintColor||null,treatments:treatments||null,measurements,
+    order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,lens_product_id:lensProductId,
+    status,lab:lab||null,lab_reference:labReference||null,lens_type:finalLensType||null,lens_design:finalLensDesign||null,
+    lens_material:finalLensMaterial||null,lens_index:finalLensIndex||null,lens_brand:finalLensBrand||null,
+    lens_diameter_mm:finalLensDiameter,lens_center_thickness_mm:lensCenterThickness,lens_edge_thickness_mm:lensEdgeThickness,
+    lens_tint_color:lensTintColor||null,treatments:finalTreatments||null,measurements,
     promised_at:promisedAtRaw?new Date(promisedAtRaw).toISOString():null,
     adaptation_followup_at:adaptationRaw?new Date(adaptationRaw).toISOString():null,
     notes:notes||null,organization_id:organizationId,branch_id:branchId
