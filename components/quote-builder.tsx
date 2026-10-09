@@ -2,13 +2,14 @@
 
 import { Fragment, useMemo, useState } from "react";
 
-type Product={id:string;product_code:string;category:string|null;brand:string|null;model:string|null;description:string|null;cost:number;sale_price:number};
+type Product={id:string;product_code:string;category:string|null;brand:string|null;model:string|null;description:string|null;cost:number;sale_price:number;lens_design?:string|null;lens_material?:string|null;lens_index?:number|string|null;lens_phi_mm?:number|string|null;lens_coatings?:string[]|null;lens_sphere_min?:number|string|null;lens_sphere_max?:number|string|null;lens_cylinder_min?:number|string|null;lens_cylinder_max?:number|string|null};
+type InitialItem={product_id:string|null;component_type:string;description:string;quantity:number;unit_price:number|string;unit_cost:number|string;discount:number|string};
 type Row={id:number;productId:string;productText:string;componentType:string;description:string;quantity:number;price:string;cost:string;discount:string};
 
 const options=[["frame","Montura"],["lens","Lunas"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 
-export function QuoteBuilder({products}:{products:Product[]}) {
+export function QuoteBuilder({products,initialItems=[],mode="initial"}:{products:Product[];initialItems?:InitialItem[];mode?:"initial"|"final"}) {
   const [rows,setRows]=useState<Row[]>(()=>{
     if(!initialItems.length)return [emptyRow(1)];
     return initialItems.map((item,index)=>{
