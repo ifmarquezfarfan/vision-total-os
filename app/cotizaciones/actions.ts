@@ -171,6 +171,7 @@ export async function startQuoteMeasurement(formData: FormData) {
   }
 
   const { error } = await supabase.from("quotes").update({
+    status: "accepted",
     workflow_stage: "measurement_pending",
     measurement_status: "pending",
     measurement_provider: provider,
