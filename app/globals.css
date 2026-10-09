@@ -456,3 +456,8 @@ input,select,textarea{min-width:0}
   .public-quote-card-title .btn,.copy-link-control,.public-quote-security{display:none!important}
   .public-quote-table{min-width:0!important}
 }
+
+
+.public-quote-total-breakdown{display:grid;gap:7px;padding-top:13px;color:#70859a}
+.public-quote-total-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px}
+.public-quote-total-breakdown strong{font-size:11px;color:#49657e;font-variant-numeric:tabular-nums}
