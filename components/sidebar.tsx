@@ -34,6 +34,7 @@ export async function Sidebar() {
         <div className="nav-group">
           <span>Operación</span>
           <Link href="/dashboard">Dashboard</Link>
+          <Link href="/atencion">Atención óptica</Link>
           <Link href="/clientes">Clientes</Link>
           <Link href="/leads">Leads</Link>
           <Link href="/cotizaciones">Cotizaciones</Link>
