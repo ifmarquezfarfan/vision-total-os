@@ -57,7 +57,16 @@ export default async function PublicQuotePage({params}:{params:Promise<{token:st
     measurement_received:"Medición recibida · falta fijar precio final",final_quote:"Lista para confirmar",
     sale_completed:"Compra completada"
   };
-  const total=Number(quote.total||0);\n  const configuration=quote.optical_configuration??{};\n  const discountPercent=Number(quote.subtotal)>0?Number(quote.discount||0)/Number(quote.subtotal)*100:0;\n  const seriesLabels:Record<string,string>={pending_measurement:"Pendiente de medición","1era serie (0.25-2.00)":"1era serie · 0.25 a 2.00","2da serie (2.25-4.00)":"2da serie · 2.25 a 4.00","3ra serie (4.25-6.00)":"3ra serie · 4.25 a 6.00","4ta serie (>6.25)":"4ta serie · mayor de 6.25"};
+  const total=Number(quote.total||0);
+  const configuration=quote.optical_configuration??{};
+  const discountPercent=Number(quote.subtotal)>0?Number(quote.discount||0)/Number(quote.subtotal)*100:0;
+  const seriesLabels:Record<string,string>={
+    pending_measurement:"Pendiente de medición",
+    "1era serie (0.25-2.00)":"1era serie · 0.25 a 2.00",
+    "2da serie (2.25-4.00)":"2da serie · 2.25 a 4.00",
+    "3ra serie (4.25-6.00)":"3ra serie · 4.25 a 6.00",
+    "4ta serie (>6.25)":"4ta serie · mayor de 6.25"
+  };
   return <main className="public-quote-page">
     <header className="public-quote-header">
       <div className="public-quote-brand"><span>VT</span><div><strong>ÓPTICA VISIÓN TOTAL</strong><small>Propuesta óptica personalizada</small></div></div>
