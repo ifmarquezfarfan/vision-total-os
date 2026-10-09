@@ -74,7 +74,7 @@ export default async function OpticalAttentionPage({searchParams}:{searchParams:
           const client=q.client_id?clientMap.get(q.client_id):null;
           return <article className="attention-quote-card" key={q.id}>
             <div className="attention-quote-heading">
-              <div><span className="attention-quote-code">{q.quote_code}</span><h3>{client?.full_name||"Cliente sin nombre"}</h3><p>{client?.whatsapp||client?.phone||"Contacto no registrado"}{client?.dni?" · DNI "+client.dni:""}</p></div>
+              <div><span className="attention-quote-code">{q.quote_code}</span><h3>{client?.full_name||"Cliente sin nombre"}</h3><Link href={"/cotizaciones/"+q.id} className="attention-print-link">Ver / imprimir cotización</Link><p>{client?.whatsapp||client?.phone||"Contacto no registrado"}{client?.dni?" · DNI "+client.dni:""}</p></div>
               <div className="attention-quote-total"><small>Importe actual</small><strong>{money.format(Number(q.total)||0)}</strong><span className={"status-badge "+(q.workflow_stage==="sale_completed"?"status-success":q.workflow_stage==="measurement_pending"?"status-warning":q.workflow_stage==="final_quote"?"status-info":"status-purple")}>{stageLabels[q.workflow_stage]||q.workflow_stage}</span></div>
             </div>
             <div className="attention-quote-meta"><span>Creada {new Date(q.quote_at).toLocaleDateString("es-PE")}</span><span>{q.quote_kind==="final"?"Cotización final":"Cotización inicial"}</span><span>Estado: {({draft:"Borrador",sent:"Enviada",accepted:"Aceptada",rejected:"Rechazada",expired:"Vencida",converted:"Convertida",cancelled:"Cancelada"} as Record<string,string>)[q.status]||q.status}</span></div>
