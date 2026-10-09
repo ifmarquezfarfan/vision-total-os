@@ -44,7 +44,7 @@ export default async function FinalQuotePage({params,searchParams}:{params:Promi
   const products=((productRows??[]) as ProductRow[]).map((product)=>({...product,cost:Number(product.cost||0),sale_price:Number(product.sale_price||0)}));
   const productMap=new Map<string,ProductRow>(products.map(product=>[product.id,product]));
   const items=(initialItemsRaw??[]) as QuoteItemRow[];
-  const initialItems=items.map(item=>{
+  const initialItems=items.filter(item=>item.component_type!=="package").map(item=>{
     const product=item.product_id?productMap.get(item.product_id):undefined;
     return {
       productId:item.product_id,
@@ -96,7 +96,7 @@ export default async function FinalQuotePage({params,searchParams}:{params:Promi
       <QuoteOptionsFields values={config} mode="final"/>
       <section className="card section">
         <div className="spread final-quote-builder-heading"><div><h2 style={{marginBottom:5}}>Composición y precio final</h2><p className="muted">Las líneas iniciales están precargadas. Cambia los códigos, agrega OD/OI por separado, ajusta precios y elimina lo que ya no se ofrecerá.</p></div><Link href="/buscador-lunas" className="btn btn-secondary">Buscar una luna</Link></div>
-        <QuoteBuilder products={products} initialItems={initialItems} submitLabel="Crear cotización final →"/>
+        <QuoteBuilder products={products} initialItems={initialItems} mode="final" submitLabel="Guardar cotización final →"/>
       </section>
       <section className="card section">
         <label className="checkline final-quote-confirm"><input type="checkbox" name="share_final_quote" defaultChecked={["Web","WhatsApp"].includes(String(config.sale_channel||""))}/> Generar enlace privado para compartir la cotización final por WhatsApp o web (caduca en 14 días).</label>
