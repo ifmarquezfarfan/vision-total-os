@@ -150,11 +150,12 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
     const componentType = String(formData.get(`component_${i}`) ?? "other");
     const description = String(formData.get(`description_${i}`) ?? "").trim();
     const quantity = Number(formData.get(`quantity_${i}`) ?? 0);
-    const price = Number(formData.get(`price_${i}`) ?? 0);
+    const priceRaw = String(formData.get(`price_${i}`) ?? "").trim();
+    const price = Number(priceRaw);
     const cost = Number(formData.get(`cost_${i}`) ?? 0);
     const itemDiscount = Number(formData.get(`discount_${i}`) ?? 0);
-    if (!productId && !description && !String(formData.get(`price_${i}`) ?? "").trim()) continue;
-    if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0 || !Number.isFinite(itemDiscount) || itemDiscount < 0) redirect("/atencion?error=Hay%20una%20línea%20de%20cotización%20inválida");
+    if (!productId && !description && !priceRaw) continue;
+    if (!priceRaw || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0 || !Number.isFinite(itemDiscount) || itemDiscount < 0) redirect("/atencion?error=Completa%20un%20precio%20válido%20para%20cada%20componente");
     items.push({
       product_id: productId || null, component_type: componentType,
       description: description || undefined, quantity, unit_price: price,
@@ -204,6 +205,7 @@ export async function completeFinalQuoteSale(formData: FormData) {
   const { supabase, organizationId, branchId, user } = await getContext();
   const { data: quote } = await supabase.from("quotes").select("id,workflow_stage,quote_kind,client_id,total").eq("id",quoteId).eq("organization_id",organizationId).eq("branch_id",branchId).maybeSingle();
   if (!quote || quote.workflow_stage !== "final_quote" || quote.quote_kind !== "final" || !quote.client_id) redirect("/atencion?error=Solo%20una%20cotización%20final%20con%20cliente%20puede%20pasar%20a%20pago");
+  if (paidAmount <= 0) redirect("/atencion?error=Registra%20un%20adelanto%20o%20el%20pago%20total%20para%20confirmar%20la%20venta");
 
   const { data, error } = await supabase.rpc("convert_quote_to_sale_transaction", {
     target_quote: quoteId,
