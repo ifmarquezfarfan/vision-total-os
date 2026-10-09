@@ -290,7 +290,10 @@ export async function updateQuoteStatus(formData: FormData) {
   const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
   const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
   if (!membership || !branch) redirect("/onboarding");
-  const { error } = await supabase.from("quotes").update({ status }).eq("id", id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
+  const updatePayload = ["cancelled","rejected","expired"].includes(status)
+    ? { status, workflow_stage: "cancelled", updated_at: new Date().toISOString() }
+    : { status, updated_at: new Date().toISOString() };
+  const { error } = await supabase.from("quotes").update(updatePayload).eq("id", id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
   if (error) redirect("/cotizaciones?error=No%20se%20pudo%20actualizar");
   redirect("/cotizaciones?updated=1");
 }
