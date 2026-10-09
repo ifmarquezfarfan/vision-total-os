@@ -130,7 +130,15 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
   const discount = Number(formData.get("discount") ?? 0);
   const expiresRaw = String(formData.get("expires_at") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
+  const recipeConfirmed = formData.get("recipe_confirmed") === "on";
+  const intendedUse = String(formData.get("final_intended_use") ?? "").trim();
+  const priority = String(formData.get("final_priority") ?? "").trim();
+  const mountingType = String(formData.get("final_mounting_type") ?? "").trim();
+  const rightLensSpec = String(formData.get("right_lens_spec") ?? "").trim();
+  const leftLensSpec = String(formData.get("left_lens_spec") ?? "").trim();
+  const treatmentNotes = String(formData.get("final_treatment_notes") ?? "").trim();
   if (!parentId) redirect("/atencion?error=Cotización%20de%20origen%20inválida");
+  if (!recipeConfirmed) redirect("/atencion?error=Confirma%20que%20revisaste%20receta%2C%20montura%20y%20configuración%20con%20el%20cliente");
   if (!Number.isFinite(discount) || discount < 0) redirect("/atencion?error=Descuento%20inválido");
 
   const itemCountRaw = Number(formData.get("item_count") ?? 0);
@@ -155,15 +163,28 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
   if (!items.length) redirect("/atencion?error=Agrega%20al%20menos%20un%20componente");
 
   const { supabase, organizationId, branchId } = await getContext();
-  const { data: parent } = await supabase.from("quotes").select("id,organization_id,branch_id,workflow_stage,quote_kind,measurement_status,prescription_id").eq("id",parentId).eq("organization_id",organizationId).eq("branch_id",branchId).maybeSingle();
+  const { data: parent } = await supabase.from("quotes").select("id,organization_id,branch_id,workflow_stage,quote_kind,measurement_status,prescription_id,optical_configuration").eq("id",parentId).eq("organization_id",organizationId).eq("branch_id",branchId).maybeSingle();
   if (!parent || parent.workflow_stage !== "measurement_received" || parent.measurement_status !== "received" || !parent.prescription_id || parent.quote_kind !== "initial") redirect("/atencion?error=Primero%20debes%20registrar%20la%20medición%20externa");
 
+  const parentConfiguration = parent.optical_configuration && typeof parent.optical_configuration === "object" ? parent.optical_configuration as Record<string,unknown> : {};
+  const finalConfiguration = {
+    ...parentConfiguration,
+    intended_use:intendedUse||parentConfiguration.intended_use||null,
+    priority:priority||parentConfiguration.priority||null,
+    mounting_type:mountingType||null,
+    right_lens_spec:rightLensSpec||null,
+    left_lens_spec:leftLensSpec||null,
+    final_treatment_notes:treatmentNotes||null,
+    recipe_and_configuration_confirmed:true,
+    final_configuration_confirmed_at:new Date().toISOString()
+  };
   const { data, error } = await supabase.rpc("create_final_quote_transaction", {
     target_parent: parentId,
     target_discount: discount,
     target_expires_at: localDateToEndIso(expiresRaw),
     target_notes: notes || null,
-    items
+    items,
+    target_configuration: finalConfiguration
   });
   if (error) redirect("/atencion?error=" + encodeURIComponent(friendlyError(error.message || "")));
   const result = data as { quote_code?: string } | null;
