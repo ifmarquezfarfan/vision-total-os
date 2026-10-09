@@ -74,6 +74,7 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
               <span>OI: {[selectedLeftLens?.brand,selectedLeftLens?.model].filter(Boolean).join(" ")||selectedLeftLens?.product_code||"Configuración manual"}</span>
               <span>Comprueba cada ojo con la receta antes de confirmar.</span>
             </div>}
+            <div className="field"><label>Uso principal</label><select name="lens_usage" defaultValue={opticalConfiguration.usage||""}><option value="">No especificado</option><option value="Lejos">Lejos</option><option value="Cerca">Cerca</option><option value="Lejos y cerca">Lejos y cerca</option><option value="Bifocal">Bifocal</option><option value="Progresivo">Progresivo</option><option value="Ocupacional">Ocupacional</option><option value="Sol graduado">Sol graduado</option><option value="Otro">Otro</option></select></div>
             <div className="quote-eye-grid">
               <div className="quote-eye-card">
                 <div className="quote-eye-heading"><span>OD</span><div><strong>Ojo derecho</strong><small>Producto de luna</small></div></div>
