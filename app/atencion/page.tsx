@@ -38,7 +38,7 @@ export default async function OpticalAttentionPage({searchParams}:{searchParams:
   ]);
   const quotes=(quoteRows??[]) as WorkflowQuote[];
   const clientMap=new Map((clients??[]).map(c=>[c.id,c]));
-  const activeQuotes=quotes.filter(q=>q.workflow_stage!=="cancelled"&&!(q.workflow_stage==="measurement_received"&&quotes.some(child=>child.parent_quote_id===q.id&&child.workflow_stage!=="cancelled")));
+  const activeQuotes=quotes.filter(q=>q.workflow_stage!=="cancelled"&&!["cancelled","rejected","expired"].includes(q.status)&&!(q.workflow_stage==="measurement_received"&&quotes.some(child=>child.parent_quote_id===q.id&&child.workflow_stage!=="cancelled"&&!["cancelled","rejected","expired"].includes(child.status))));
   const needsInitial=activeQuotes.filter(q=>q.workflow_stage==="initial_quote");
   const needsMeasuring=activeQuotes.filter(q=>q.workflow_stage==="measurement_pending");
   const needsFinal=activeQuotes.filter(q=>q.workflow_stage==="measurement_received");
