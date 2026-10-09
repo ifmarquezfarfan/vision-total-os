@@ -474,3 +474,81 @@ input,select,textarea{min-width:0}
   .quote-document-optical-config .table-wrap{overflow:visible!important}
   .quote-document-optical-config th,.quote-document-optical-config td{font-size:7px!important;padding:5px!important}
 }
+
+
+/* Secure customer-facing quote link and sharing controls */
+.share-quote-panel{display:grid;gap:13px;border-color:#cbe3f8;background:linear-gradient(130deg,#f5fbff,#fff)}
+.share-quote-panel h2{font-size:18px;margin:6px 0}
+.share-quote-panel p{font-size:11px;line-height:1.5;margin:0}
+.share-quote-actions{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.share-quote-actions input{width:100%;min-width:0;border:1px solid #d8e4ef;border-radius:8px;padding:10px;font-size:11px;color:#4d6176;background:#fff}
+.share-quote-actions .btn{white-space:nowrap;font-size:11px}
+.share-quote-row{display:grid;justify-items:start;gap:5px}
+.share-quote-row .btn{font-size:10px;white-space:nowrap;padding:8px 10px}
+.public-quote-shell{min-height:100vh;padding:34px 18px;background:linear-gradient(145deg,#f0f7fc 0%,#fafcff 43%,#eef7ff 100%);font-family:Arial,Helvetica,sans-serif;color:#26394d}
+.public-quote-card{max-width:940px;margin:0 auto;background:#fff;border:1px solid #e1e9f1;border-radius:18px;padding:38px 42px;box-shadow:0 12px 36px rgba(35,70,100,.08)}
+.public-quote-header{display:flex;justify-content:space-between;align-items:flex-start;gap:22px;padding-bottom:22px;border-bottom:2px solid #238fe1}
+.public-quote-brand{display:flex;align-items:center;gap:12px}
+.public-quote-brand-mark{width:47px;height:47px;flex:0 0 auto;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#28a7f4,#176fc4);color:#fff;font-size:17px;font-weight:900}
+.public-quote-brand>div:last-child{display:grid;gap:5px}
+.public-quote-brand strong{font-size:14px;letter-spacing:.06em}
+.public-quote-brand span{font-size:11px;color:#8292a2}
+.public-quote-code{text-align:right;display:grid;gap:5px}
+.public-quote-code small{font-size:9px;letter-spacing:.12em;font-weight:900;color:#1b88d6}
+.public-quote-code h1{font-size:24px;letter-spacing:-.03em;margin:0}
+.public-quote-code span{font-size:11px;color:#7a8b9d}
+.public-quote-status{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
+.public-quote-status span{font-size:9px;font-weight:800;color:#42617b;background:#eff7fd;border:1px solid #dcecf8;padding:6px 10px;border-radius:999px}
+.public-quote-welcome{padding:18px 0}
+.public-quote-welcome h2{font-size:19px;margin:0 0 7px}
+.public-quote-welcome p{font-size:12px;color:#6f8194;line-height:1.6;margin:0}
+.public-quote-table{overflow:visible}
+.public-quote-table table{width:100%;min-width:0}
+.public-quote-table th,.public-quote-table td{font-size:10px;padding:11px 9px}
+.public-quote-table th:first-child,.public-quote-table td:first-child{text-align:left}
+.public-quote-table td{overflow-wrap:anywhere}
+.public-quote-lenses{margin-top:20px;padding:17px;border:1px solid #e3edf6;border-radius:12px;background:#f9fcff;break-inside:avoid}
+.public-quote-lenses h3{font-size:13px;margin:0 0 5px}
+.public-quote-lenses>p{font-size:10px;color:#7a8da0;margin:0 0 10px}
+.public-quote-eye-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.public-quote-eye{display:grid;gap:6px;padding:12px;border:1px solid #e2eaf2;border-radius:9px;background:#fff;min-width:0}
+.public-quote-eye>span{font-size:9px;letter-spacing:.08em;color:#168bd9;font-weight:900}
+.public-quote-eye>strong{font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.public-quote-eye>small{font-size:10px;line-height:1.45;color:#6d8194;overflow-wrap:anywhere}
+.public-quote-totals{max-width:330px;margin:20px 0 0 auto;display:grid;gap:9px}
+.public-quote-totals>div{display:flex;justify-content:space-between;gap:14px;font-size:11px;color:#74869a}
+.public-quote-totals strong{font-variant-numeric:tabular-nums;color:#30465b}
+.public-quote-totals .public-quote-grand-total{margin-top:3px;padding:13px 0;border-top:1px solid #dfe8f0;font-size:12px;font-weight:900;color:#263d53}
+.public-quote-totals .public-quote-grand-total strong{font-size:23px;color:#1887d4}
+.public-quote-expiry{text-align:right;font-size:10px;color:#7c8da0;margin:9px 0 0}
+.public-quote-disclaimer{margin-top:20px;padding:14px 16px;border-left:3px solid #1989d9;background:#f3f9fe}
+.public-quote-disclaimer strong{font-size:11px;color:#2d597d}
+.public-quote-disclaimer p{font-size:11px;line-height:1.6;color:#62788d;margin:5px 0 0}
+.public-quote-actions{display:flex;justify-content:flex-end;margin-top:17px}
+.public-quote-footer{display:grid;justify-items:center;text-align:center;gap:7px;margin-top:25px;padding-top:17px;border-top:1px solid #e7edf3}
+.public-quote-footer strong{font-size:12px}
+.public-quote-footer span{font-size:10px;color:#6f8296;line-height:1.5;max-width:560px}
+.public-quote-footer small{font-size:9px;color:#92a0ad}
+.public-quote-unavailable{max-width:560px;text-align:center;display:grid;justify-items:center;gap:10px;margin-top:12vh}
+.public-quote-unavailable h1{font-size:22px;margin:0}
+.public-quote-unavailable p{font-size:12px;color:#738599;line-height:1.6;margin:0;max-width:410px}
+@media(max-width:700px){
+  .share-quote-actions{grid-template-columns:1fr}
+  .share-quote-actions .btn{width:100%;text-align:center}
+  .public-quote-shell{padding:12px 8px}
+  .public-quote-card{padding:20px 14px;border-radius:12px}
+  .public-quote-header{flex-direction:column;gap:14px}
+  .public-quote-code{text-align:left}
+  .public-quote-eye-grid{grid-template-columns:1fr}
+  .public-quote-table th,.public-quote-table td{font-size:9px;padding:7px 5px}
+  .public-quote-actions .btn{width:100%}
+  .public-quote-actions{display:grid}
+}
+@media print{
+  .public-quote-shell{padding:0!important;background:#fff!important;min-height:0!important}
+  .public-quote-card{border:0!important;border-radius:0!important;box-shadow:none!important;max-width:none!important;padding:0!important}
+  .public-quote-actions{display:none!important}
+  .public-quote-header,.public-quote-lenses,.public-quote-totals,.public-quote-disclaimer{break-inside:avoid}
+  .public-quote-table{overflow:visible!important}
+  .public-quote-table th,.public-quote-table td{font-size:9px!important;padding:8px 6px!important}
+}
