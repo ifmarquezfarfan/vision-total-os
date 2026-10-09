@@ -9,8 +9,12 @@ type QuoteInitialItem={productId?:string|null;productText?:string;componentType?
 const options=[["frame","Montura"],["lens_od","Lunas OD"],["lens_os","Lunas OI"],["lens","Lunas (sin asignar)"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 
-export function QuoteBuilder({products}:{products:Product[]}) {
-  const [rows,setRows]=useState<Row[]>([emptyRow(1)]);
+export function QuoteBuilder({products,initialItems=[]}:{products:Product[];initialItems?:QuoteInitialItem[]}) {
+  const [rows,setRows]=useState<Row[]>(()=>initialItems.length?initialItems.map((item,index)=>({
+    id:index+1,productId:item.productId??"",productText:item.productText??"",componentType:item.componentType??"other",
+    description:item.description??"",quantity:Math.max(1,Number(item.quantity??1)),price:String(item.price??""),
+    cost:String(item.cost??""),discount:String(item.discount??"0")
+  })):[emptyRow(1)]);
   const map=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
 
