@@ -64,7 +64,7 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
         <input type="hidden" name="sale_id" value={primarySale?.id||""}/>
         <div className="grid grid-3" style={{marginTop:14}}>
           <div className="card"><h2>Producto óptico</h2>
-            <div className="field"><label>Receta</label><select name="prescription_id" defaultValue=""><option value="">Sin receta</option>{(prescriptions??[]).map(p=><option key={p.id} value={p.id}>{new Date(p.exam_at).toLocaleDateString("es-PE")} · {clientMap.get(p.client_id)||"Cliente"}</option>)}</select></div>
+            <div className="field"><label>Receta</label><select name="prescription_id" defaultValue={sourceQuote?.prescription_id||""}><option value="">Sin receta</option>{(prescriptions??[]).map(p=><option key={p.id} value={p.id}>{new Date(p.exam_at).toLocaleDateString("es-PE")} · {clientMap.get(p.client_id)||"Cliente"}</option>)}</select></div>
             <div className="field"><label>Montura</label><select name="frame_product_id" defaultValue=""><option value="">Sin montura vinculada</option>{(products??[]).map(p=><option key={p.id} value={p.id}>{p.product_code} · {productMap.get(p.id)||""}</option>)}</select></div>
           </div>
           <div className="card optical-card"><h2>Lunas</h2><OpticalOrderQuickStart/>
