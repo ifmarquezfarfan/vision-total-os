@@ -1,10 +1,9 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createQuote, updateQuoteStatus, convertQuoteToSale, deleteQuote } from "./actions";
-import { ConfirmSubmit } from "@/components/confirm-submit";
+import { createQuote } from "./actions";
 import { QuoteBuilder } from "@/components/quote-builder";
-import { QuickStart } from "@/components/quick-start";
 
 export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string;from_quote?:string;stage?:string}>}) {
   const supabase=await createClient();
@@ -74,7 +73,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
         <div className="quote-builder-intro"><span className="eyebrow">PROPUESTA ECONÓMICA</span><h3>{finalMode?"Productos elegidos con medidas confirmadas":"Arma la cotización que el cliente verá"}</h3><p className="muted">{finalMode?"Ajusta la combinación copiada de la propuesta inicial. Confirma disponibilidad y especificaciones antes de cerrar.":"Explica las opciones de montura, lunas, materiales y tratamientos. Si aún no hay receta, indica que el importe es orientativo."}</p></div>
         <QuoteBuilder products={products??[]} initialItems={finalMode?(parentItems??[]):[]}/>
         {finalMode&&<div className="notice quote-context-notice"><strong>Importante:</strong> esta cotización final conserva el vínculo con la medición externa. El cobro se registra después de que el cliente confirme.</div>}
-        <div className="quote-form-footer"><a href="/atencion" className="btn btn-secondary">Volver al flujo</a><button className="btn btn-primary">{finalMode?"Guardar cotización final → Ir a pago":"Guardar cotización inicial → Continuar flujo"}</button></div>
+        <div className="quote-form-footer"><a href="/atencion" className="btn btn-secondary">Volver al flujo</a><button disabled={finalMode&&!parentQuote} className="btn btn-primary">{finalMode?"Guardar cotización final → Ir a pago":"Guardar cotización inicial → Continuar flujo"}</button></div>
       </form>
     </section>
     <section id="historial-cotizaciones" className="section">
