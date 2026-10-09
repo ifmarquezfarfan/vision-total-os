@@ -2,21 +2,22 @@ import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 
 const flow = [
-  ["1","Clientes","Busca por DNI/nombre. Crea el cliente cuando realmente sea necesario.","/clientes"],
-  ["2","Leads","Úsalo cuando todavía existe una oportunidad que puede convertirse en venta.","/leads"],
-  ["3","Cotización","Cuando el cliente necesita una propuesta, arma la combinación de montura + lunas + tratamientos y deja el siguiente paso.","/cotizaciones"],
-  ["4","Venta","La venta es el registro comercial definitivo. Usa Inicio rápido y agrega bloques de 3 líneas para pares adicionales.","/ventas"],
-  ["5","Pedido óptico","Cuando hay trabajo óptico, conecta venta + cliente + receta + montura + lunas + medidas + laboratorio.","/pedidos"],
-  ["6","Seguimiento","Después de vender, registra la próxima acción. Entrega, adaptación, reactivación y renovación viven aquí.","/seguimientos"],
-  ["7","Inventario / Compras / Finanzas","Inventario controla producto y stock; Compras abastece; Finanzas controla cobros, gastos y caja.","/inventario"],
-  ["8","Auditoría","Es la última capa: quién hizo qué y cuándo. No es para operar, es para revisar y proteger la trazabilidad.","/auditoria"]
+  ["1","Cliente + cotización inicial","Busca un cliente existente o registra sus datos en el primer contacto. Explica opciones y prepara el precio orientativo.","/cotizaciones"],
+  ["2","Medición externa","Si el cliente acepta continuar, registra el centro/profesional al que se deriva y después captura la receta y la DP recibidas.","/atencion"],
+  ["3","Configuración final","Revisa la receta correcta, montura, luna por ojo, índice, material, tratamientos y precio final. Conserva la propuesta inicial como historial.","/atencion"],
+  ["4","Pago y comprobante","Registra el medio de pago y el importe realmente cobrado. Genera el comprobante imprimible y continúa con el pedido.","/atencion"],
+  ["5","Pedido óptico","Si requiere laboratorio, conecta venta, receta, montura, luna, medidas, control de calidad y entrega.","/pedidos"],
+  ["6","Seguimiento","Después de vender, registra adaptación, entrega, reactivación y renovación.","/seguimientos"],
+  ["7","Inventario / Compras / Finanzas","Estas herramientas trabajan detrás del proceso: stock, reposición, cobros, gastos y caja.","/inventario"],
+  ["8","Auditoría","Revisa quién hizo qué y cuándo, sin interrumpir la atención.","/auditoria"]
 ] as const;
 
 const modules = [
   ["Dashboard","Centro de control. Te dice qué necesita atención hoy.","/dashboard"],
   ["Clientes","Memoria comercial del cliente y su historial.","/clientes"],
   ["Leads","Oportunidades que todavía no son ventas.","/leads"],
-  ["Cotizaciones","Propuestas que pueden convertirse en venta sin perder contexto.","/cotizaciones"],
+  ["Atención óptica","Centro que organiza el recorrido de la venta en el orden real del mostrador.","/atencion"],
+  ["Cotizaciones","Propuestas iniciales y finales con historial.","/cotizaciones"],
   ["Ventas","Caja y registro comercial de la operación.","/ventas"],
   ["Pedidos ópticos","Producción óptica especializada, desde receta y medidas hasta QC y entrega.","/pedidos"],
   ["Seguimientos","Agenda de próximas acciones y postventa.","/seguimientos"],
@@ -29,8 +30,11 @@ const modules = [
 
 const example = [
   "Cliente: Andrea López, nueva compradora.",
-  "Cotización: Montura + lunas 1.56 + antirreflejo.",
-  "Venta: 1 paquete, adelanto registrado.",
+  "Cotización inicial: se registra al cliente, preferencias, alternativas de montura/lunas y precio orientativo.",
+  "Medición externa: se guarda centro/profesional y se transcribe la receta recibida, vinculada al cliente.",
+  "Cotización final: se ajustan por ojo las lunas, índice, material, tratamientos y precio con las medidas confirmadas.",
+  "Pago: se registra el medio e importe; la venta y el comprobante quedan ligados al mismo cliente.",
+  
   "Pedido óptico: vincula venta, receta de lejos/cerca, prisma y base, DP binocular/monocular, alturas, ajuste de montura, diseño/material/índice/PHI, recubrimientos y laboratorio.",
   "QC: revisión aprobada. Luego se marca aviso de recojo y, finalmente, entrega.",
   "Seguimiento: se agenda adaptación y un futuro control.",
@@ -65,7 +69,7 @@ export default function GuidePage() {
         </section>
 
         <section className="card section">
-          <div className="section-heading"><div><h2>Ejemplo completo de capacitación</h2><p className="muted">Puedes usar este caso con una persona nueva hasta que domine el recorrido.</p></div><Link href="/ventas" className="btn btn-primary">Practicar en Ventas</Link></div>
+          <div className="section-heading"><div><h2>Ejemplo completo de capacitación</h2><p className="muted">Puedes usar este caso con una persona nueva hasta que domine el recorrido.</p></div><Link href="/atencion" className="btn btn-primary">Practicar recorrido completo</Link></div>
           <div className="training-example">
             {example.map((line,index)=><div key={line} className="training-row"><span>{index+1}</span><p>{line}</p></div>)}
           </div>
@@ -88,9 +92,9 @@ export default function GuidePage() {
           <div className="card">
             <h2>Atajos que ahorran tiempo</h2>
             <div className="tip-list">
-              <div><strong>Venta:</strong> Inicio rápido crea 3 líneas de una operación. Usa “Agregar 3 líneas” para el segundo o tercer par.</div>
-              <div><strong>Cotización:</strong> parte de una combinación sugerida y ajusta solo lo necesario.</div>
-              <div><strong>Pedido óptico:</strong> usa una plantilla de captura y luego valida cada campo antes de enviarlo al laboratorio.</div>
+              <div><strong>Atención óptica:</strong> empieza con el cliente y la cotización. La aplicación te indica cuándo enviar a medir, terminar la configuración y cobrar.</div>
+              <div><strong>Configuración final:</strong> parte de la propuesta inicial para no volver a cargar todo. Ajusta el producto y el precio tras la medición.</div>
+              <div><strong>Pago y comprobante:</strong> confirma el importe recibido. El comprobante no reemplaza la boleta electrónica fiscal hasta integrar el proveedor autorizado.</div>
               <div><strong>Dashboard:</strong> úsalo para decidir qué mover primero, no como pantalla decorativa.</div>
             </div>
           </div>
