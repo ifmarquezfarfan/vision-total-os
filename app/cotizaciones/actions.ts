@@ -201,11 +201,11 @@ export async function recordQuoteMeasurement(formData: FormData) {
   for (const name of ["od_sphere","od_cylinder","od_axis","od_add","os_sphere","os_cylinder","os_axis","os_add",
     "od_near_sphere","od_near_cylinder","od_near_axis","os_near_sphere","os_near_cylinder","os_near_axis",
     "od_prism_horizontal","od_prism_vertical","os_prism_horizontal","os_prism_vertical","pd","pd_od","pd_os"]) {
-    const value = data[name];
+    const value = rxData[name];
     if (value && !Number.isFinite(Number(value))) redirect("/atencion?error=Hay%20un%20valor%20numérico%20inválido%20en%20la%20medición");
   }
   for (const name of ["od_axis","os_axis","od_near_axis","os_near_axis"]) {
-    const value = data[name] ? Number(data[name]) : null;
+    const value = rxData[name] ? Number(rxData[name]) : null;
     if (value !== null && (!Number.isInteger(value) || value < 1 || value > 180)) redirect("/atencion?error=El%20eje%20debe%20estar%20entre%201%20y%20180");
   }
   for (const name of ["pd","pd_od","pd_os"]) {
@@ -219,13 +219,13 @@ export async function recordQuoteMeasurement(formData: FormData) {
     ["os_prism_vertical","os_prism_vertical_base",["BU","BD"]]
   ].some(([amountName,baseName,bases])=>{
     const amount=data[String(amountName)]?Number(data[String(amountName)]):null;
-    const base=data[String(baseName)];
+    const base=rxData[String(baseName)];
     return (amount!==null&&amount<0)||(base!==""&&!(bases as string[]).includes(base))||(amount!==null&&amount>0&&base==="")||(base!==""&&amount===null);
   });
   if (invalidPrism) redirect("/atencion?error=Completa%20el%20valor%20y%20la%20base%20del%20prisma");
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("record_quote_measurement", { target_quote: quoteId, target_data: data });
+  const { error } = await supabase.rpc("record_quote_measurement", { target_quote: quoteId, target_data: rxData });
   if (error) {
     const message = error.message.includes("not awaiting") ? "La cotización ya no está esperando medición" : error.message.includes("Not authorized") ? "No tienes permisos para registrar mediciones" : "No se pudo guardar la medición. Revisa los datos y vuelve a intentar";
     redirect("/atencion?error="+encodeURIComponent(message));
