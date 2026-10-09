@@ -14,7 +14,7 @@ export async function createQuote(formData: FormData) {
 
   let clientId = String(formData.get("client_id") ?? "") || null;
   const leadId = String(formData.get("lead_id") ?? "") || null;
-  const discount = Number(formData.get("discount") ?? 0);
+  const discountPercent = Number(formData.get("discount_percent") ?? 0);
   const newClientName = String(formData.get("new_client_full_name") ?? "").trim();
   const newClientDni = String(formData.get("new_client_dni") ?? "").trim();
   const newClientPhone = String(formData.get("new_client_phone") ?? "").trim();
@@ -78,13 +78,20 @@ export async function createQuote(formData: FormData) {
   }
 
   if (!items.length) redirect("/cotizaciones?error=Agrega%20al%20menos%20un%20ítem");
+  if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+    redirect("/cotizaciones?error=El%20descuento%20debe%20estar%20entre%200%25%20y%20100%25");
+  }
+  const subtotalBeforeGlobal = items.reduce((sum, item) =>
+    sum + Math.max(Number(item.quantity || 1) * Number(item.unit_price || 0) - Number(item.discount || 0), 0), 0);
+  const discount = Math.round((subtotalBeforeGlobal * discountPercent / 100 + Number.EPSILON) * 100) / 100;
+
 
   const { data, error } = await supabase.rpc("create_quote_transaction", {
     target_org: membership.organization_id,
     target_branch: branch.branch_id,
     target_client: clientId,
     target_lead: leadId,
-    target_discount: Number.isFinite(discount) && discount >= 0 ? discount : 0,
+    target_discount: discount,
     target_expires_at: expiresAtRaw ? new Date(expiresAtRaw + "T23:59:59").toISOString() : null,
     target_notes: notes || null,
     items,
@@ -96,12 +103,29 @@ export async function createQuote(formData: FormData) {
   const code = result?.quote_code ? String(result.quote_code) : "cotización";
   if (!quoteId) redirect("/cotizaciones?error=La%20cotización%20se%20creó%20pero%20no%20pudo%20obtenerse%20su%20código");
 
+  const allowedLensFamilies = ["Monofocal (lejos)", "Monofocal (cerca)", "Progresivo/Bifocal"];
+  const allowedLensMaterials = ["Resina simple", "Cristal-Vidrio", "CR-39 (NK-55)", "Policarbonato", "Trivex", "High Index (Premium)"];
+  const allowedLensTreatments = ["Antirrayas","Antirreflejo","Antiempañante","Protección UV 400","Filtro Azul-Violeta","Hidrofóbico/Oleofóbico","Polarizado","Fotocromático"];
+  const allowedLensSeries = ["pending_measurement","1era serie (0.25-2.00)","2da serie (2.25-4.00)","3ra serie (4.25-6.00)","4ta serie (>6.25)"];
+  const lensFamilyRaw = String(formData.get("lens_family") ?? "").trim();
+  const lensMaterialRaw = String(formData.get("lens_material") ?? "").trim();
+  const lensSeriesRaw = String(formData.get("lens_series") ?? "pending_measurement").trim() || "pending_measurement";
+  if (lensFamilyRaw && !allowedLensFamilies.includes(lensFamilyRaw)) redirect("/cotizaciones?error=Tipo%20de%20luna%20inválido");
+  if (lensMaterialRaw && !allowedLensMaterials.includes(lensMaterialRaw)) redirect("/cotizaciones?error=Material%20de%20luna%20inválido");
+  if (!allowedLensSeries.includes(lensSeriesRaw)) redirect("/cotizaciones?error=Serie%20óptica%20inválida");
+  const lensTreatments = [...new Set(formData.getAll("lens_treatments").map((value) => String(value).trim()).filter((value) => allowedLensTreatments.includes(value)))];
   const configuration = {
     intended_use:String(formData.get("intended_use")??"").trim()||null,
     priority:String(formData.get("priority")??"").trim()||null,
     budget_reference:String(formData.get("budget_reference")??"").trim()||null,
     client_preference:String(formData.get("client_preference")??"").trim()||null,
-    sale_channel:String(formData.get("sale_channel")??"Presencial").trim()||"Presencial"
+    sale_channel:String(formData.get("sale_channel")??"Presencial").trim()||"Presencial",
+    lens_family:lensFamilyRaw||null,
+    lens_material:lensMaterialRaw||null,
+    lens_treatments:lensTreatments,
+    lens_series:lensSeriesRaw,
+    package_brand:String(formData.get("package_brand")??"").trim().slice(0,180)||null,
+    price_note:String(formData.get("price_note")??"").trim().slice(0,300)||"Precio orientativo, sujeto a medición"
   };
   const shareToken = shareQuote ? randomBytes(24).toString("hex") : null;
   const shareExpiresAt = shareQuote ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() : null;
