@@ -20,7 +20,7 @@ export async function createQuote(formData: FormData) {
   const newClientWhatsapp = String(formData.get("new_client_whatsapp") ?? "").trim();
   const newClientEmail = String(formData.get("new_client_email") ?? "").trim();
   const marketingOptIn = formData.get("marketing_opt_in") === "on";
-  const requiresMeasurement = formData.get("measurement_required") !== "off";
+  const requiresMeasurement = formData.get("measurement_required") === "on";
   const discount = Number(formData.get("discount") ?? 0);
   const expiresAtRaw = String(formData.get("expires_at") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
@@ -149,35 +149,136 @@ export async function createQuote(formData: FormData) {
 
   redirect("/atencion?created=" + encodeURIComponent(quoteCode) + (parentQuote ? "&final=1" : ""));
 }
+export async function startQuoteMeasurement(formData: FormData) {
+  const quoteId = String(formData.get("quote_id") ?? "").trim();
+  const provider = String(formData.get("measurement_provider") ?? "").trim();
+  const notes = String(formData.get("measurement_notes") ?? "").trim();
+  if (!quoteId || !provider) redirect("/atencion?error=Indica%20el%20centro%20o%20profesional%20que%20hará%20la%20medición");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+
+  const { data: quote } = await supabase.from("quotes")
+    .select("id,workflow_stage,requires_measurement,measurement_status")
+    .eq("id",quoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle();
+  if (!quote) redirect("/atencion?error=Cotización%20no%20encontrada");
+  if (quote.workflow_stage !== "initial_quote" || !quote.requires_measurement || quote.measurement_status !== "not_started") {
+    redirect("/atencion?error=Esta%20cotización%20no%20está%20lista%20para%20enviar%20a%20medición");
+  }
+
+  const { error } = await supabase.from("quotes").update({
+    workflow_stage: "measurement_pending",
+    measurement_status: "pending",
+    measurement_provider: provider,
+    measurement_sent_at: new Date().toISOString(),
+    measurement_notes: notes || null,
+    updated_at: new Date().toISOString()
+  }).eq("id",quoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
+  if (error) redirect("/atencion?error=No%20se%20pudo%20registrar%20la%20derivación%20a%20medición");
+  redirect("/atencion?measurement_sent=1");
+}
+
+export async function recordQuoteMeasurement(formData: FormData) {
+  const quoteId = String(formData.get("quote_id") ?? "").trim();
+  if (!quoteId) redirect("/atencion?error=Cotización%20inválida");
+
+  const fields = [
+    "exam_at","expires_at","rx_type","cylinder_notation","prescriber_name","prescriber_license","rx_source",
+    "od_sphere","od_cylinder","od_axis","od_add","os_sphere","os_cylinder","os_axis","os_add",
+    "od_near_sphere","od_near_cylinder","od_near_axis","os_near_sphere","os_near_cylinder","os_near_axis",
+    "od_prism_horizontal","od_prism_horizontal_base","od_prism_vertical","od_prism_vertical_base",
+    "os_prism_horizontal","os_prism_horizontal_base","os_prism_vertical","os_prism_vertical_base",
+    "pd","pd_od","pd_os","notes","measurement_notes"
+  ];
+  const data: Record<string,string> = {};
+  for (const field of fields) data[field] = String(formData.get(field) ?? "").trim();
+
+  for (const name of ["od_sphere","od_cylinder","od_axis","od_add","os_sphere","os_cylinder","os_axis","os_add",
+    "od_near_sphere","od_near_cylinder","od_near_axis","os_near_sphere","os_near_cylinder","os_near_axis",
+    "od_prism_horizontal","od_prism_vertical","os_prism_horizontal","os_prism_vertical","pd","pd_od","pd_os"]) {
+    const value = data[name];
+    if (value && !Number.isFinite(Number(value))) redirect("/atencion?error=Hay%20un%20valor%20numérico%20inválido%20en%20la%20medición");
+  }
+  for (const name of ["od_axis","os_axis","od_near_axis","os_near_axis"]) {
+    const value = data[name] ? Number(data[name]) : null;
+    if (value !== null && (!Number.isInteger(value) || value < 1 || value > 180)) redirect("/atencion?error=El%20eje%20debe%20estar%20entre%201%20y%20180");
+  }
+  for (const name of ["pd","pd_od","pd_os"]) {
+    const value = data[name] ? Number(data[name]) : null;
+    if (value !== null && (value <= 0 || value > 100)) redirect("/atencion?error=Revisa%20la%20distancia%20pupilar");
+  }
+  const invalidPrism = [
+    ["od_prism_horizontal","od_prism_horizontal_base",["BI","BO"]],
+    ["od_prism_vertical","od_prism_vertical_base",["BU","BD"]],
+    ["os_prism_horizontal","os_prism_horizontal_base",["BI","BO"]],
+    ["os_prism_vertical","os_prism_vertical_base",["BU","BD"]]
+  ].some(([amountName,baseName,bases])=>{
+    const amount=data[String(amountName)]?Number(data[String(amountName)]):null;
+    const base=data[String(baseName)];
+    return (amount!==null&&amount<0)||(base!==""&&!(bases as string[]).includes(base))||(amount!==null&&amount>0&&base==="")||(base!==""&&amount===null);
+  });
+  if (invalidPrism) redirect("/atencion?error=Completa%20el%20valor%20y%20la%20base%20del%20prisma");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("record_quote_measurement", { target_quote: quoteId, target_data: data });
+  if (error) {
+    const message = error.message.includes("not awaiting") ? "La cotización ya no está esperando medición" : error.message.includes("Not authorized") ? "No tienes permisos para registrar mediciones" : "No se pudo guardar la medición. Revisa los datos y vuelve a intentar";
+    redirect("/atencion?error="+encodeURIComponent(message));
+  }
+  redirect("/atencion?measurement_received=1");
+}
+
 export async function updateQuoteStatus(formData: FormData) {
   const id = String(formData.get("quote_id") ?? "");
   const status = String(formData.get("status") ?? "draft");
   const allowed = ["draft", "sent", "accepted", "rejected", "expired", "cancelled"];
   if (!id || !allowed.includes(status)) redirect("/cotizaciones?error=Datos%20inválidos");
   const supabase = await createClient();
-  const { error } = await supabase.from("quotes").update({ status }).eq("id", id);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+  const { error } = await supabase.from("quotes").update({ status }).eq("id", id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
   if (error) redirect("/cotizaciones?error=No%20se%20pudo%20actualizar");
   redirect("/cotizaciones?updated=1");
 }
 
 export async function convertQuoteToSale(formData: FormData) {
-  const quoteId = String(formData.get("quote_id") ?? "");
+  const quoteId = String(formData.get("quote_id") ?? "").trim();
   const paymentMethod = String(formData.get("payment_method") ?? "").trim();
   const paid = Number(formData.get("paid_amount") ?? 0);
   const responsible = String(formData.get("responsible") ?? "").trim();
-  if (!quoteId) redirect("/cotizaciones?error=Cotización%20inválida");
+  if (!quoteId) redirect("/atencion?error=Cotización%20inválida");
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
+  if (!membership || !branch) redirect("/onboarding");
+  const { data: quote } = await supabase.from("quotes").select("id,workflow_stage,measurement_status,requires_measurement")
+    .eq("id",quoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle();
+  if (!quote) redirect("/atencion?error=Cotización%20no%20encontrada");
+  if (quote.workflow_stage !== "final_quote" || (quote.requires_measurement && quote.measurement_status !== "received")) {
+    redirect("/atencion?error=Completa%20la%20medición%20y%20la%20configuración%20final%20antes%20de%20cobrar");
+  }
+  if (!Number.isFinite(paid) || paid < 0) redirect("/atencion?error=El%20pago%20inicial%20no%20es%20válido");
   const { data, error } = await supabase.rpc("convert_quote_to_sale_transaction", {
     target_quote: quoteId,
     target_payment_method: paymentMethod || null,
-    target_paid: Number.isFinite(paid) && paid >= 0 ? paid : 0,
-    target_responsible: responsible || null,
+    target_paid: paid,
+    target_responsible: responsible || user.email || null,
   });
-  if (error) redirect("/cotizaciones?error=No%20se%20pudo%20convertir%20la%20cotización");
+  if (error) redirect("/atencion?error=No%20se%20pudo%20registrar%20la%20venta%20y%20el%20pago");
+  await supabase.from("quotes").update({ workflow_stage: "sale_completed", finalized_at: new Date().toISOString() })
+    .eq("id",quoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
   const saleCode = typeof data === "object" && data && "sale_code" in data ? String((data as { sale_code: string }).sale_code) : "venta";
-  redirect("/cotizaciones?converted=" + encodeURIComponent(saleCode));
+  redirect("/atencion?converted=" + encodeURIComponent(saleCode));
 }
-
 
 export async function deleteQuote(formData: FormData) {
   const id = String(formData.get("quote_id") ?? "");
