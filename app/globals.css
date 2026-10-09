@@ -442,3 +442,35 @@ input,select,textarea{min-width:0}
   .sales-receipt *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
   .receipt-legal-note{display:none!important}
 }
+
+
+/* One lens product per eye: quote capture, order form and printed summary */
+.quote-eye-grid,.lens-eye-spec-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.quote-eye-card,.lens-eye-spec{min-width:0;border:1px solid #e1eaf3;border-radius:12px;background:#fff;padding:15px;display:grid;gap:13px}
+.quote-eye-heading{display:flex;gap:10px;align-items:center;border-bottom:1px solid #edf2f7;padding-bottom:11px}
+.quote-eye-heading>span{display:grid;place-items:center;width:35px;height:35px;border-radius:10px;background:#e8f5ff;color:#167fc3;font-weight:900;font-size:11px}
+.quote-eye-heading>div{display:grid;gap:4px;min-width:0}
+.quote-eye-heading strong{font-size:13px;color:#284258}
+.quote-eye-heading small{font-size:10px;color:#8392a1;line-height:1.4}
+.quote-eye-card .field{min-width:0}
+.quote-eye-card .check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lens-eye-spec-grid{margin-top:10px}
+.lens-eye-spec{background:#f9fcff;gap:7px}
+.lens-eye-spec>span{font-size:9px;font-weight:900;letter-spacing:.09em;color:#168bd9;text-transform:uppercase}
+.lens-eye-spec>strong{font-size:12px;color:#29435b;line-height:1.4}
+.lens-eye-spec>small{font-size:10px;color:#6e8093;line-height:1.5;overflow-wrap:anywhere}
+.quote-document-optical-config{margin-top:17px;break-inside:avoid}
+.quote-document-optical-config h3{font-size:12px;margin:0 0 6px}
+.quote-document-optical-config .quote-document-use{font-size:9px;color:#718398;line-height:1.5;margin:4px 0 8px}
+.quote-document-optical-config .table-wrap{overflow:visible}
+.quote-document-optical-config table{min-width:0;width:100%}
+.quote-document-optical-config th,.quote-document-optical-config td{font-size:8px;padding:7px 6px;overflow-wrap:anywhere}
+@media(max-width:760px){
+  .quote-eye-grid,.lens-eye-spec-grid{grid-template-columns:1fr}
+  .quote-eye-card .check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media print{
+  .quote-eye-grid,.lens-eye-spec-grid{break-inside:avoid}
+  .quote-document-optical-config .table-wrap{overflow:visible!important}
+  .quote-document-optical-config th,.quote-document-optical-config td{font-size:7px!important;padding:5px!important}
+}
