@@ -8,6 +8,7 @@ import { QuoteBuilder } from "@/components/quote-builder";
 import { QuickStart } from "@/components/quick-start";
 import { ClientIntakePicker } from "@/components/client-intake-picker";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { QuoteOptionsFields } from "@/components/quote-options-fields";
 
 export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string}>}) {
   const supabase=await createClient();
@@ -29,7 +30,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
   const params=await searchParams;
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Cotizaciones</strong><span className="muted">{user.email}</span></header><div className="content">
-    <h1 className="page-title">Cotizaciones</h1><p className="subtitle">La primera cotización orienta. Después de la medición externa se prepara la cotización final y el cobro se hace desde Atención al cliente.</p>
+    <h1 className="page-title">Cotizaciones</h1><p className="subtitle">Primero registra al cliente y una propuesta orientativa de materiales, tratamientos y paquete. Después se añade la medición y se fija el precio definitivo en Atención óptica.</p>
     <QuickStart title="Inicio rápido de cotización" hint="Empieza con una estructura sugerida y deja claro qué debe ocurrir después." items={[
       {label:"Cotización óptica",href:"#nueva-cotizacion",description:"Montura + lunas + tratamiento",tone:"green"},
       {label:"Segundo / tercer par",href:"#nueva-cotizacion",description:"Agrega otro bloque de 3 líneas",tone:"blue"},
@@ -47,7 +48,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
         <div className="field" style={{gridColumn:"span 2"}}><label>Cliente *</label><ClientIntakePicker clients={clients??[]}/></div>
         <div className="field"><label>Lead</label><select name="lead_id" defaultValue=""><option value="">Sin lead</option>{(leads??[]).map(l=><option key={l.id} value={l.id}>{l.lead_code} · {l.full_name}</option>)}</select></div>
         <div className="field"><label>Vigencia de cotización</label><input name="expires_at" type="date"/></div>
-        <div className="field"><label>Descuento global (S/)</label><input name="discount" type="number" min="0" step="0.01" defaultValue="0"/></div>
+        <div className="field"><label>Descuento global (%)</label><input name="discount_percent" type="number" min="0" max="100" step="0.5" defaultValue="0"/><span className="field-hint">El sistema calcula el descuento en soles a partir del subtotal.</span></div>
         <div className="field"><label>Uso principal</label><select name="intended_use" defaultValue=""><option value="">Por determinar</option><option>Uso diario</option><option>Pantallas / oficina</option><option>Lectura</option><option>Conducción</option><option>Exterior / deporte</option><option>Ocupacional</option><option>Multifocal / progresivo</option><option>Otro</option></select></div>
         <div className="field"><label>Prioridad del cliente</label><select name="priority" defaultValue=""><option value="">Por determinar</option><option>Precio</option><option>Equilibrio precio-calidad</option><option>Calidad / duración</option><option>Diseño / estética</option><option>Comodidad / peso</option></select></div>
         <div className="field"><label>Presupuesto de referencia (S/)</label><input name="budget_reference" type="number" min="0" step="0.01" placeholder="Opcional"/></div>
@@ -56,7 +57,8 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
         <div className="field" style={{gridColumn:"span 2"}}><label>Necesidad / preferencia que explicó el cliente</label><textarea name="client_preference" rows={2} placeholder="Uso, comodidad, estilo, presupuesto o dudas a resolver"/></div>
         <div className="field" style={{gridColumn:"span 2"}}><label>Notas internas</label><input name="notes" placeholder="Detalles relevantes para la cotización"/></div>
       </div>
-      <QuoteBuilder products={products??[]}/>
+      <QuoteOptionsFields mode="initial"/>
+      <QuoteBuilder products={products??[]} submitLabel="Guardar cotización inicial →"/>
     </form></section>
 
     <section id="historial-cotizaciones" className="section"><div className="spread"><div><h2>Historial</h2><p className="muted">La etapa indica qué toca hacer a continuación; el cobro final se completa en Atención al cliente.</p></div><Link href="/atencion" className="btn btn-secondary">Abrir flujo de atención</Link></div><div className="table-wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Lead</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
