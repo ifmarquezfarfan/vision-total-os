@@ -132,6 +132,7 @@ export async function createOrder(formData:FormData){
     order_code:code,client_id:clientId,sale_id:saleId,prescription_id:prescriptionId,frame_product_id:frameProductId,
     lens_product_id:commonLensSame?rightLensProductId:null,
     right_lens_product_id:rightLensProductId,left_lens_product_id:leftLensProductId,
+    lens_usage:lensUsage||null,right_lens_coatings:rightCoatings,left_lens_coatings:leftCoatings,
     status,lab:lab||null,lab_reference:labReference||null,lens_type:finalLensType||null,lens_design:finalLensDesign||null,
     lens_material:finalLensMaterial||null,lens_index:finalLensIndex||null,lens_brand:finalLensBrand||null,
     lens_diameter_mm:finalLensDiameter,lens_center_thickness_mm:lensCenterThickness,lens_edge_thickness_mm:lensEdgeThickness,
