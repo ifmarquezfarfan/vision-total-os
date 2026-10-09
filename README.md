@@ -28,3 +28,7 @@ Nunca subas secretos al repositorio.
 El sistema está pensado como una aplicación web centralizada. Los usuarios, sucursales y módulos trabajan sobre una base PostgreSQL común con RLS de Supabase.
 
 El objetivo no es una maqueta: cada módulo se construirá sobre datos persistentes y relaciones reales.
+
+## Optical customer journey
+
+The primary route is `/atencion`: preliminary quote and client registration, external measurement, final optical configuration, then payment and internal receipt. `/cotizaciones` owns the initial and final quote documents. `/buscador-lunas` searches only the real branch-scoped lens catalog; populate the manufacturer's data before relying on power-range filters.
