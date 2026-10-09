@@ -158,10 +158,10 @@ input[type=checkbox],input[type=radio]{width:17px;height:17px;min-height:17px;ac
   transition:background .15s,border-color .15s,transform .15s
 }
 .btn:hover,button:hover{background:#eef2f6}
-.btn-primary,button[type=submit],.primary{
+.btn-primary,button[type=submit]:not(.btn-secondary):not(.btn-danger),.primary{
   background:var(--brand);border-color:var(--brand);color:#fff
 }
-.btn-primary:hover,button[type=submit]:hover,.primary:hover{
+.btn-primary:hover,button[type=submit]:not(.btn-secondary):not(.btn-danger):hover,.primary:hover{
   background:var(--brand-strong);border-color:var(--brand-strong);color:#fff
 }
 .btn-secondary{background:#f7f9fb;border-color:#d3dce6;color:var(--ink)}
