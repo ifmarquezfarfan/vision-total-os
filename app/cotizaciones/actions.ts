@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -23,6 +24,7 @@ export async function createQuote(formData: FormData) {
   const newClientMarketingOptIn = formData.get("new_client_marketing_opt_in") === "on";
   const expiresAtRaw = String(formData.get("expires_at") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
+  const shareQuote = formData.get("share_quote") === "on";
 
   if (!clientId && !newClientName) redirect("/cotizaciones?error=Busca%20un%20cliente%20registrado%20o%20completa%20los%20datos%20del%20nuevo%20cliente");
   if (!clientId && newClientDni && !/^\d{6,15}$/.test(newClientDni)) redirect("/cotizaciones?error=Revisa%20el%20documento%20del%20cliente");
@@ -101,15 +103,20 @@ export async function createQuote(formData: FormData) {
     client_preference:String(formData.get("client_preference")??"").trim()||null,
     sale_channel:String(formData.get("sale_channel")??"Presencial").trim()||"Presencial"
   };
+  const shareToken = shareQuote ? randomBytes(24).toString("hex") : null;
+  const shareExpiresAt = shareQuote ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() : null;
   const { error: workflowError } = await supabase.from("quotes").update({
     quote_kind:"initial",
     workflow_stage:"initial_quote",
     requires_measurement:true,
     measurement_status:"not_started",
-    optical_configuration:configuration
+    optical_configuration:configuration,
+    share_token:shareToken,
+    share_enabled:shareQuote,
+    share_expires_at:shareExpiresAt
   }).eq("id",quoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id);
   if(workflowError) redirect("/cotizaciones?error=La%20cotización%20se%20creó%2C%20pero%20no%20se%20pudo%20actualizar%20su%20flujo");
-  redirect("/atencion?created=" + encodeURIComponent(code));
+  redirect("/atencion?created=" + encodeURIComponent(code) + (shareToken ? "&share=" + encodeURIComponent(shareToken) : ""));
 }
 
 export async function updateQuoteStatus(formData: FormData) {
