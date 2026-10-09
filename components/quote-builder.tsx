@@ -9,18 +9,21 @@ type QuoteInitialItem={productId?:string|null;productText?:string;componentType?
 const options=[["frame","Montura"],["lens_od","Lunas OD"],["lens_os","Lunas OI"],["lens","Lunas (sin asignar)"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["package","Paquete óptico"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 function starterRows():Row[]{return [
-  {...emptyRow(1),componentType:"frame",description:"Montura"},
-  {...emptyRow(2),componentType:"lens_od",description:"Lunas ojo derecho"},
-  {...emptyRow(3),componentType:"lens_os",description:"Lunas ojo izquierdo"},
-  {...emptyRow(4),componentType:"treatment",description:"Tratamiento"}
+  {...emptyRow(1),componentType:"package",description:"Paquete óptico orientativo"}
+];}
+function finalStarterRows():Row[]{return [
+  {...emptyRow(1),componentType:"frame",description:"Montura elegida"},
+  {...emptyRow(2),componentType:"lens_od",description:"Lunas ojo derecho (OD)"},
+  {...emptyRow(3),componentType:"lens_os",description:"Lunas ojo izquierdo (OI)"},
+  {...emptyRow(4),componentType:"treatment",description:"Tratamientos confirmados"}
 ];}
 
-export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotización"}:{products:Product[];initialItems?:QuoteInitialItem[];submitLabel?:string}) {
+export function QuoteBuilder({products,initialItems=[],submitLabel="Guardar cotización",mode="initial"}:{products:Product[];initialItems?:QuoteInitialItem[];submitLabel?:string;mode?:"initial"|"final"}) {
   const [rows,setRows]=useState<Row[]>(()=>initialItems.length?initialItems.map((item,index)=>({
     id:index+1,productId:item.productId??"",productText:item.productText??"",componentType:item.componentType??"other",
     description:item.description??"",quantity:Math.max(1,Number(item.quantity??1)),price:String(item.price??""),
     cost:String(item.cost??""),discount:String(item.discount??"0")
-  })):starterRows());
+  })):mode==="final"?finalStarterRows():starterRows());
   const map=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
 
@@ -48,7 +51,7 @@ export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotiza
 
   return <div>
     <div className="quote-suggestions">
-      <div><div className="eyebrow">Sugerencias para cotizar</div><strong>Arma un paquete orientativo o detalla montura, OD, OI y tratamientos por separado.</strong><p className="muted">Las plantillas no asignan precios: ingresa el importe real que quieras comunicar al cliente.</p></div>
+      <div><div className="eyebrow">{mode==="final"?"CONFIGURACIÓN DEFINITIVA":"PROPUESTA ORIENTATIVA"}</div><strong>{mode==="final"?"Confirma la montura, cada ojo y los tratamientos a partir de la receta recibida.":"Empieza con un precio aproximado de paquete, o detalla montura, OD, OI y tratamientos si lo necesitas."}</strong><p className="muted">{mode==="final"?"Revisa las líneas copiadas y elimina o ajusta cualquier estimación que ya no corresponda.":"No necesitas una marca o modelo exactos. Ingresa un precio de referencia y deja explícito qué incluye la alternativa."}</p></div>
       <div className="chip-row">
         <button type="button" className="chip-button" onClick={()=>replacePreset(["frame","lens_od","lens_os","treatment"])}><span>Montura + OD + OI + AR</span><small>4 líneas · recomendada</small></button>
         <button type="button" className="chip-button" onClick={()=>replacePreset(["frame","lens_od","lens_os"])}><span>Montura + ambas lunas</span><small>3 líneas</small></button>
