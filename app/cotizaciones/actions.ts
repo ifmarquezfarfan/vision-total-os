@@ -25,7 +25,7 @@ export async function createQuote(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim();
 
   if (!clientId && !newClientName) redirect("/cotizaciones?error=Busca%20un%20cliente%20registrado%20o%20completa%20los%20datos%20del%20nuevo%20cliente");
-  if (!clientId && newClientDni && !/^\\d{6,15}$/.test(newClientDni)) redirect("/cotizaciones?error=Revisa%20el%20documento%20del%20cliente");
+  if (!clientId && newClientDni && !/^\d{6,15}$/.test(newClientDni)) redirect("/cotizaciones?error=Revisa%20el%20documento%20del%20cliente");
 
   if (!clientId && newClientName) {
     if (newClientDni) {
@@ -56,12 +56,13 @@ export async function createQuote(formData: FormData) {
     const componentType = String(formData.get(`component_${i}`) ?? "other");
     const description = String(formData.get(`description_${i}`) ?? "").trim();
     const quantity = Number(formData.get(`quantity_${i}`) ?? 0);
-    const price = Number(formData.get(`price_${i}`) ?? 0);
+    const priceRaw = String(formData.get(`price_${i}`) ?? "").trim();
+    const price = Number(priceRaw);
     const cost = Number(formData.get(`cost_${i}`) ?? 0);
     const itemDiscount = Number(formData.get(`discount_${i}`) ?? 0);
-    if (!productId && !description && !price) continue;
-    if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0) {
-      redirect("/cotizaciones?error=Ítem%20inválido");
+    if (!productId && !description && !priceRaw) continue;
+    if (!priceRaw || !Number.isFinite(price) || !Number.isFinite(quantity) || quantity <= 0 || price < 0) {
+      redirect("/cotizaciones?error=Completa%20un%20precio%20válido%20para%20cada%20componente");
     }
     items.push({
       product_id: productId || null,
