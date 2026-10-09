@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createQuote } from "./actions";
+import { createQuote, shareQuote, revokeQuoteShare } from "./actions";
+import { ShareQuoteActions } from "@/components/share-quote-actions";
 import { QuoteBuilder } from "@/components/quote-builder";
 
-export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string;from_quote?:string;stage?:string}>}) {
+export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string;from_quote?:string;stage?:string;share_quote?:string;revoked?:string}>}) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user) redirect("/login");
@@ -34,6 +36,15 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
       .eq("id",parentQuote.prescription_id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle()
     : {data:null};
   const finalMode=Boolean(parentId);
+  const shareQuoteId=String(params.share_quote??"");
+  const {data:shareRecord}=shareQuoteId?await supabase.from("quotes").select("id,quote_code,share_token,share_enabled,share_expires_at")
+    .eq("id",shareQuoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle():{data:null};
+  const requestHeaders=await headers();
+  const requestHost=requestHeaders.get("x-forwarded-host")||requestHeaders.get("host");
+  const protocol=requestHeaders.get("x-forwarded-proto")||(requestHost?.includes("localhost")?"http":"https");
+  const origin=process.env.NEXT_PUBLIC_SITE_URL?.replace(/\\/+$/,"")||(requestHost?protocol+"://"+requestHost:"");
+  const shareUrl=shareRecord?.share_enabled&&shareRecord.share_token?(origin+"/propuesta/"+shareRecord.share_token):"";
+  const whatsappUrl=shareUrl?"https://wa.me/?text="+encodeURIComponent("Hola, te compartimos la cotización "+shareRecord.quote_code+" de Óptica Visión Total: "+shareUrl):"";
   const opticalConfig = (parentQuote?.optical_configuration ?? {}) as {
     usage?: string;
     od?: { lens_product_id?: string; coatings?: string[] };
@@ -52,6 +63,8 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
       <div className="quote-step"><span>4</span><div><strong>Pago y comprobante</strong><small>Al confirmar compra</small></div></div>
     </div>
     {params.error&&<p className="notice notice-error section">{params.error}</p>}
+    {params.revoked&&<p className="notice section">El enlace público quedó desactivado.</p>}
+    {shareRecord?.share_enabled&&shareUrl&&<section className="card section share-quote-panel"><div><span className="eyebrow">COTIZACIÓN VIRTUAL</span><h2>Enlace listo para enviar</h2><p className="muted">{shareRecord.quote_code} · El cliente verá solo artículos, precios y configuración compartida. El enlace vence {shareRecord.share_expires_at?new Date(shareRecord.share_expires_at).toLocaleString("es-PE"):"en siete días"}.</p></div><ShareQuoteActions shareUrl={shareUrl} whatsappUrl={whatsappUrl}/><form action={revokeQuoteShare}><input type="hidden" name="quote_id" value={shareRecord.id}/><button className="btn btn-secondary">Desactivar enlace</button></form></section>}
     {parentId&&!parentQuote&&<div className="notice notice-error section">No encontramos una cotización válida para configurar. Vuelve a Atención óptica y revisa su estado.</div>}
     {finalMode&&parentQuote&&<div className="notice quote-context-notice section"><strong>Configuración final a partir de {parentQuote.quote_code}</strong><span>Cliente: {parentClient?.full_name||"Cliente"} · La medición queda vinculada. Se copiaron los productos de la cotización inicial para ajustar solo lo necesario.</span></div>}
     {finalMode&&parentPrescription&&<section className="card section quote-rx-summary"><div><span className="eyebrow">RECETA VINCULADA</span><h2>Medición recibida · {parentPrescription.rx_type||"Uso no indicado"}</h2><p className="muted">Revisa estos valores antes de elegir la configuración. La receta original sigue siendo la referencia.</p></div><div className="table-wrap"><table><thead><tr><th>Ojo</th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>ADD</th><th>Cerca SPH</th><th>Prisma H / V</th></tr></thead><tbody><tr><th>OD · Derecho</th><td>{parentPrescription.od_sphere??"·"}</td><td>{parentPrescription.od_cylinder??"·"}</td><td>{parentPrescription.od_axis??"·"}</td><td>{parentPrescription.od_add??"·"}</td><td>{parentPrescription.od_near_sphere??"·"}</td><td>{parentPrescription.od_prism_horizontal??"·"} {parentPrescription.od_prism_horizontal_base||""} / {parentPrescription.od_prism_vertical??"·"} {parentPrescription.od_prism_vertical_base||""}</td></tr><tr><th>OI · Izquierdo</th><td>{parentPrescription.os_sphere??"·"}</td><td>{parentPrescription.os_cylinder??"·"}</td><td>{parentPrescription.os_axis??"·"}</td><td>{parentPrescription.os_add??"·"}</td><td>{parentPrescription.os_near_sphere??"·"}</td><td>{parentPrescription.os_prism_horizontal??"·"} {parentPrescription.os_prism_horizontal_base||""} / {parentPrescription.os_prism_vertical??"·"} {parentPrescription.os_prism_vertical_base||""}</td></tr></tbody></table></div><p className="field-hint">DP binocular: {parentPrescription.pd??"·"} mm · OD: {parentPrescription.pd_od??"·"} mm · OI: {parentPrescription.pd_os??"·"} mm · Formato de cilindro: {parentPrescription.cylinder_notation==="positive"?"positivo":"negativo"}</p></section>}
@@ -108,9 +121,9 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
     </section>
     <section id="historial-cotizaciones" className="section">
       <div className="spread"><div><h2>Cotizaciones recientes</h2><p className="muted">La propuesta inicial y la final se conservan como historial.</p></div><a href="/atencion" className="link-strong">Abrir flujo completo →</a></div>
-      <div className="table-wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Total</th><th>Estado del proceso</th><th>Estado</th></tr></thead><tbody>
-        {(quotes??[]).map(q=><tr key={q.id}><td><Link href={"/cotizaciones/"+q.id} className="link-strong">{q.quote_code}</Link></td><td>{new Date(q.quote_at).toLocaleDateString("es-PE")}</td><td>{q.client_id?clientMap.get(q.client_id)||"Cliente":"·"}</td><td>{q.quote_kind==="final"?"Final":"Inicial"}</td><td>S/ {Number(q.total).toFixed(2)}</td><td><span className={"status-badge "+(q.workflow_stage==="sale_completed"?"status-success":q.workflow_stage==="measurement_pending"?"status-warning":q.workflow_stage==="final_quote"?"status-info":"status-purple")}>{({initial_quote:"Cotización inicial",measurement_pending:"Esperando medición",measurement_received:"Medición recibida",final_quote:"Lista para cobrar",sale_completed:"Venta registrada",cancelled:"Cancelada"} as Record<string,string>)[q.workflow_stage]||q.workflow_stage}</span></td><td>{({draft:"Borrador",sent:"Enviada",accepted:"Aceptada",rejected:"Rechazada",expired:"Vencida",converted:"Convertida",cancelled:"Cancelada"} as Record<string,string>)[q.status]||q.status}</td></tr>)}
-        {!quotes?.length&&<tr><td colSpan={7} className="muted">Todavía no hay cotizaciones.</td></tr>}
+      <div className="table-wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Total</th><th>Estado del proceso</th><th>Estado</th><th>Enlace virtual</th></tr></thead><tbody>
+        {(quotes??[]).map(q=><tr key={q.id}><td><Link href={"/cotizaciones/"+q.id} className="link-strong">{q.quote_code}</Link></td><td>{new Date(q.quote_at).toLocaleDateString("es-PE")}</td><td>{q.client_id?clientMap.get(q.client_id)||"Cliente":"·"}</td><td>{q.quote_kind==="final"?"Final":"Inicial"}</td><td>S/ {Number(q.total).toFixed(2)}</td><td><span className={"status-badge "+(q.workflow_stage==="sale_completed"?"status-success":q.workflow_stage==="measurement_pending"?"status-warning":q.workflow_stage==="final_quote"?"status-info":"status-purple")}>{({initial_quote:"Cotización inicial",measurement_pending:"Esperando medición",measurement_received:"Medición recibida",final_quote:"Lista para cobrar",sale_completed:"Venta registrada",cancelled:"Cancelada"} as Record<string,string>)[q.workflow_stage]||q.workflow_stage}</span></td><td>{({draft:"Borrador",sent:"Enviada",accepted:"Aceptada",rejected:"Rechazada",expired:"Vencida",converted:"Convertida",cancelled:"Cancelada"} as Record<string,string>)[q.status]||q.status}</td><td><div className="share-quote-row"><form action={shareQuote}><input type="hidden" name="quote_id" value={q.id}/><button className="btn btn-secondary">{q.share_enabled?"Renovar enlace":"Crear enlace"}</button></form>{q.share_enabled&&<span className="field-hint">{q.share_expires_at?new Date(q.share_expires_at).toLocaleDateString("es-PE"):"Activo"}</span>}</div></td></tr>)}
+        {!quotes?.length&&<tr><td colSpan={8} className="muted">Todavía no hay cotizaciones.</td></tr>}
       </tbody></table></div>
     </section>
   </div></main></div>;
