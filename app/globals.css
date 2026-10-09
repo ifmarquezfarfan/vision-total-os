@@ -380,3 +380,79 @@ input,select,textarea{min-width:0}
   .receipt-lines td:first-child strong{font-size:8pt!important}
   .receipt-lines td:first-child small,.receipt-center small{font-size:7pt!important}
 }
+
+
+/* Shared customer quotation */
+.public-quote-page{min-height:100vh;background:radial-gradient(circle at top right,#e8f6ff 0,#f8fbff 36%,#f7f9fc 76%);color:#223347;padding:0 20px 52px}
+.public-quote-header{max-width:1120px;margin:0 auto;min-height:86px;display:flex;align-items:center;justify-content:space-between;gap:18px;border-bottom:1px solid #e1eaf3}
+.public-quote-brand{display:flex;align-items:center;gap:11px}
+.public-quote-brand>span{width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#2699ec,#11d1d0);color:#fff;font-size:13px;font-weight:900}
+.public-quote-brand>div{display:grid;gap:4px}
+.public-quote-brand strong{font-size:12px;letter-spacing:.1em}
+.public-quote-brand small{font-size:10px;color:#7e91a5}
+.public-quote-security{display:flex;align-items:center;gap:7px;border:1px solid #cfe6f8;border-radius:999px;background:#fff;padding:7px 10px;font-size:10px;color:#47718f}
+.public-quote-security span{width:7px;height:7px;border-radius:50%;background:#20ad73}
+.public-quote-content{max-width:970px;margin:0 auto;padding-top:36px}
+.public-quote-eyebrow{font-size:10px;letter-spacing:.16em;font-weight:900;color:#2787cc;margin-bottom:11px}
+.public-quote-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:24px}
+.public-quote-hero h1{font-size:clamp(27px,4vw,38px);letter-spacing:-.04em;margin:0 0 9px;color:#173b5b}
+.public-quote-hero p{margin:0;font-size:14px;line-height:1.6;color:#687f95;max-width:600px}
+.public-quote-type{display:inline-flex;flex:0 0 auto;padding:8px 10px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}
+.public-quote-type.initial{background:#fff5df;border:1px solid #f2ddb1;color:#986b19}
+.public-quote-type.final{background:#e9f8f0;border:1px solid #c4ead7;color:#16784a}
+.public-quote-status{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.public-quote-status>div{display:grid;gap:7px;padding:14px 15px;border:1px solid #e2eaf2;border-radius:12px;background:#ffffffc9}
+.public-quote-status small{font-size:9px;letter-spacing:.1em;color:#91a0af;font-weight:900}
+.public-quote-status strong{font-size:12px;color:#3f5870;line-height:1.4}
+.public-quote-card{padding:23px;border:1px solid #e0e9f2;border-radius:17px;background:#fff;box-shadow:0 12px 38px rgba(46,79,111,.055)}
+.public-quote-card-title{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:17px}
+.public-quote-card-title h2{margin:0 0 4px;font-size:18px;color:#25445e}
+.public-quote-card-title p{font-size:11px;margin:0;color:#8b9aaa}
+.public-quote-card-title .btn{font-size:11px;white-space:nowrap}
+.public-quote-table-wrap{border-color:#e6edf4}
+.public-quote-table{min-width:650px}
+.public-quote-table th{font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.public-quote-table td{font-size:11px;line-height:1.5;color:#40576c}
+.public-quote-component{display:inline-block;padding:5px 7px;border-radius:6px;background:#f0f7fd;color:#287db5;font-size:9px;font-weight:800}
+.public-quote-total{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:17px 0 3px;padding:17px 2px 2px;border-top:1px solid #e7edf4;font-size:14px;font-weight:800;color:#314f68}
+.public-quote-total strong{font-size:28px;letter-spacing:-.04em;color:#1682cd;font-variant-numeric:tabular-nums}
+.public-quote-provisional,.public-quote-confirmed{margin-top:17px;padding:14px;border-radius:11px;border:1px solid #f0dfb9;background:#fffaf0;color:#785c27}
+.public-quote-provisional strong,.public-quote-confirmed strong{font-size:12px}
+.public-quote-provisional p,.public-quote-confirmed p{font-size:11px;line-height:1.55;margin:6px 0 0}
+.public-quote-confirmed{background:#f1fbf6;border-color:#d0eedf;color:#236347}
+.public-quote-next{display:grid;grid-template-columns:40px 1fr;gap:13px;align-items:start;margin-top:18px;padding:20px;border:1px solid #dfeaf4;background:#f6fbff;border-radius:14px}
+.public-quote-next-icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#def5ec;color:#1c9161;font-weight:900;font-size:18px}
+.public-quote-next h2{font-size:15px;margin:1px 0 5px;color:#2b4e69}
+.public-quote-next p{margin:0;font-size:12px;line-height:1.6;color:#6f8499}
+.public-quote-footer{display:grid;justify-items:center;text-align:center;gap:7px;padding:25px 10px 5px}
+.public-quote-footer strong{font-size:11px;color:#415e77}
+.public-quote-footer span,.public-quote-footer small{font-size:9px;line-height:1.5;color:#8796a5;max-width:680px}
+.copy-link-control{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.copy-link-button{font-size:10px!important;white-space:nowrap}
+.copy-link-fallback{max-width:250px;min-width:120px;border:1px solid #ccd8e4;border-radius:7px;padding:7px;font-size:10px;color:#3e5a72}
+.attention-share-box{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:14px;padding:16px 17px;border:1px solid #cde6f8;border-radius:13px;background:#f1f9ff;color:#234f70}
+.attention-share-box>div:first-child{display:grid;gap:5px}
+.attention-share-box strong{font-size:13px}
+.attention-share-box p{margin:0;font-size:11px;line-height:1.5;color:#65849d}
+.attention-share-box .btn{font-size:11px}
+@media(max-width:700px){
+  .public-quote-page{padding:0 12px 32px}
+  .public-quote-header{min-height:72px}
+  .public-quote-content{padding-top:25px}
+  .public-quote-hero{flex-direction:column}
+  .public-quote-status{grid-template-columns:1fr}
+  .public-quote-card{padding:14px}
+  .public-quote-card-title{align-items:flex-start;flex-direction:column}
+  .public-quote-total strong{font-size:24px}
+  .public-quote-next{grid-template-columns:32px 1fr;padding:14px}
+  .public-quote-next-icon{width:30px;height:30px}
+  .attention-share-box .inline{flex-wrap:wrap}
+}
+@media print{
+  .public-quote-page{background:#fff!important;padding:0!important}
+  .public-quote-header{min-height:55px}
+  .public-quote-content{padding-top:14px}
+  .public-quote-card,.public-quote-status>div,.public-quote-next{box-shadow:none!important}
+  .public-quote-card-title .btn,.copy-link-control,.public-quote-security{display:none!important}
+  .public-quote-table{min-width:0!important}
+}
