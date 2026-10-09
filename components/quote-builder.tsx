@@ -8,13 +8,19 @@ type QuoteInitialItem={productId?:string|null;productText?:string;componentType?
 
 const options=[["frame","Montura"],["lens_od","Lunas OD"],["lens_os","Lunas OI"],["lens","Lunas (sin asignar)"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
+function starterRows():Row[]{return [
+  {...emptyRow(1),componentType:"frame",description:"Montura"},
+  {...emptyRow(2),componentType:"lens_od",description:"Lunas ojo derecho"},
+  {...emptyRow(3),componentType:"lens_os",description:"Lunas ojo izquierdo"},
+  {...emptyRow(4),componentType:"treatment",description:"Tratamiento"}
+];}
 
 export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotización"}:{products:Product[];initialItems?:QuoteInitialItem[];submitLabel?:string}) {
   const [rows,setRows]=useState<Row[]>(()=>initialItems.length?initialItems.map((item,index)=>({
     id:index+1,productId:item.productId??"",productText:item.productText??"",componentType:item.componentType??"other",
     description:item.description??"",quantity:Math.max(1,Number(item.quantity??1)),price:String(item.price??""),
     cost:String(item.cost??""),discount:String(item.discount??"0")
-  })):[emptyRow(1)]);
+  })):starterRows());
   const map=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
 
@@ -53,7 +59,7 @@ export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotiza
           <td><select name={`component_${index+1}`} value={row.componentType} onChange={e=>update(row.id,{componentType:e.target.value})}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></td>
           <td><input name={`description_${index+1}`} value={row.description} onChange={e=>update(row.id,{description:e.target.value})} placeholder="Descripción"/></td>
           <td><input name={`quantity_${index+1}`} type="number" min="1" step="1" value={row.quantity} onChange={e=>update(row.id,{quantity:Math.max(1,Number(e.target.value||1))})}/></td>
-          <td><input name={`price_${index+1}`} type="number" min="0" step="0.01" value={row.price} onChange={e=>update(row.id,{price:e.target.value})}/></td>
+          <td><input name={`price_${index+1}`} type="number" min="0" step="0.01" required value={row.price} onChange={e=>update(row.id,{price:e.target.value})}/></td>
           <td><input name={`cost_${index+1}`} type="number" min="0" step="0.01" value={row.cost} onChange={e=>update(row.id,{cost:e.target.value})}/></td>
           <td><input name={`discount_${index+1}`} type="number" min="0" step="0.01" value={row.discount} onChange={e=>update(row.id,{discount:e.target.value})}/></td>
           <td><button type="button" className="btn btn-secondary" onClick={()=>setRows(cur=>cur.length===1?cur.filter(()=>true):cur.filter(r=>r.id!==row.id))}>Quitar</button></td>
