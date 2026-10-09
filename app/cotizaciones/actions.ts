@@ -195,8 +195,8 @@ export async function recordQuoteMeasurement(formData: FormData) {
     "os_prism_horizontal","os_prism_horizontal_base","os_prism_vertical","os_prism_vertical_base",
     "pd","pd_od","pd_os","notes","measurement_notes"
   ];
-  const data: Record<string,string> = {};
-  for (const field of fields) data[field] = String(formData.get(field) ?? "").trim();
+  const rxData: Record<string,string> = {};
+  for (const field of fields) rxData[field] = String(formData.get(field) ?? "").trim();
 
   for (const name of ["od_sphere","od_cylinder","od_axis","od_add","os_sphere","os_cylinder","os_axis","os_add",
     "od_near_sphere","od_near_cylinder","od_near_axis","os_near_sphere","os_near_cylinder","os_near_axis",
@@ -209,7 +209,7 @@ export async function recordQuoteMeasurement(formData: FormData) {
     if (value !== null && (!Number.isInteger(value) || value < 1 || value > 180)) redirect("/atencion?error=El%20eje%20debe%20estar%20entre%201%20y%20180");
   }
   for (const name of ["pd","pd_od","pd_os"]) {
-    const value = data[name] ? Number(data[name]) : null;
+    const value = rxData[name] ? Number(rxData[name]) : null;
     if (value !== null && (value <= 0 || value > 100)) redirect("/atencion?error=Revisa%20la%20distancia%20pupilar");
   }
   const invalidPrism = [
@@ -218,7 +218,7 @@ export async function recordQuoteMeasurement(formData: FormData) {
     ["os_prism_horizontal","os_prism_horizontal_base",["BI","BO"]],
     ["os_prism_vertical","os_prism_vertical_base",["BU","BD"]]
   ].some(([amountName,baseName,bases])=>{
-    const amount=data[String(amountName)]?Number(data[String(amountName)]):null;
+    const amount=rxData[String(amountName)]?Number(rxData[String(amountName)]):null;
     const base=rxData[String(baseName)];
     return (amount!==null&&amount<0)||(base!==""&&!(bases as string[]).includes(base))||(amount!==null&&amount>0&&base==="")||(base!==""&&amount===null);
   });
