@@ -7,6 +7,7 @@ import { ConfirmSubmit } from "@/components/confirm-submit";
 import { QuoteBuilder } from "@/components/quote-builder";
 import { QuickStart } from "@/components/quick-start";
 import { ClientIntakePicker } from "@/components/client-intake-picker";
+import { CopyLinkButton } from "@/components/copy-link-button";
 
 export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string}>}) {
   const supabase=await createClient();
@@ -20,7 +21,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
     supabase.from("clients").select("id,full_name,dni,phone,whatsapp").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("status","active").order("full_name").limit(800),
     supabase.from("leads").select("id,lead_code,full_name,stage").order("created_at",{ascending:false}).limit(300),
     supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price").eq("active",true).order("brand").limit(300),
-    supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id,quote_kind,workflow_stage,measurement_status,parent_quote_id").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("quote_at",{ascending:false}).limit(200)
+    supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id,quote_kind,workflow_stage,measurement_status,parent_quote_id,share_token,share_enabled,share_expires_at").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("quote_at",{ascending:false}).limit(200)
   ]);
 
   const clientMap=new Map((clients??[]).map(c=>[c.id,c.full_name]));
@@ -51,6 +52,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
         <div className="field"><label>Prioridad del cliente</label><select name="priority" defaultValue=""><option value="">Por determinar</option><option>Precio</option><option>Equilibrio precio-calidad</option><option>Calidad / duración</option><option>Diseño / estética</option><option>Comodidad / peso</option></select></div>
         <div className="field"><label>Presupuesto de referencia (S/)</label><input name="budget_reference" type="number" min="0" step="0.01" placeholder="Opcional"/></div>
         <div className="field"><label>Canal de la cotización</label><select name="sale_channel" defaultValue="Presencial"><option>Presencial</option><option>WhatsApp</option><option>Web</option><option>Otro</option></select></div>
+        <div className="field" style={{gridColumn:"span 2"}}><label className="checkline"><input type="checkbox" name="share_quote" defaultChecked/> Generar enlace privado para compartir por WhatsApp o web</label><span className="field-hint">El enlace muestra los componentes y precios, caduca en 14 días y no revela el DNI ni datos internos.</span></div>
         <div className="field" style={{gridColumn:"span 2"}}><label>Necesidad / preferencia que explicó el cliente</label><textarea name="client_preference" rows={2} placeholder="Uso, comodidad, estilo, presupuesto o dudas a resolver"/></div>
         <div className="field" style={{gridColumn:"span 2"}}><label>Notas internas</label><input name="notes" placeholder="Detalles relevantes para la cotización"/></div>
       </div>
@@ -61,6 +63,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
       {(quotes??[]).map(q=><tr key={q.id}><td>{q.quote_code}</td><td>{new Date(q.quote_at).toLocaleDateString("es-PE")}</td><td>{q.client_id?clientMap.get(q.client_id)||"Cliente":"·"}</td><td>{q.lead_id?leadMap.get(q.lead_id)||"Lead":"·"}</td><td>S/ {Number(q.total).toFixed(2)}</td><td>{q.expires_at?new Date(q.expires_at).toLocaleDateString("es-PE"):"·"}</td>
         <td><span className={"status-badge "+(q.workflow_stage==="sale_completed"?"status-success":q.workflow_stage==="final_quote"?"status-info":q.workflow_stage==="measurement_pending"?"status-warning":q.workflow_stage==="measurement_received"?"status-purple":"status-neutral")}>{({initial_quote:"Cotización inicial",measurement_pending:"Medición pendiente",measurement_received:"Medición recibida",final_quote:"Cotización final",sale_completed:"Venta completada",cancelled:"Cancelada"} as Record<string,string>)[q.workflow_stage]||q.workflow_stage}</span><div className="field-hint">{({initial_quote:"Enviar a medir",measurement_pending:"Esperar receta",measurement_received:"Preparar cotización final",final_quote:"Confirmar pago",sale_completed:"Operación finalizada"} as Record<string,string>)[q.workflow_stage]||""}</div></td><td><div className="action-stack">
           <form action={updateQuoteStatus} className="inline"><input type="hidden" name="quote_id" value={q.id}/><select name="status" defaultValue={q.status}><option value="draft">Borrador</option><option value="sent">Enviada</option><option value="accepted">Aceptada</option><option value="rejected">Rechazada</option><option value="expired">Vencida</option><option value="cancelled">Cancelada</option></select><button className="btn btn-secondary">Guardar</button></form>
+          {q.share_enabled&&q.share_token&&<div className="inline"><Link href={"/cotizacion/"+q.share_token} target="_blank" className="btn btn-secondary">Ver enlace</Link><CopyLinkButton path={"/cotizacion/"+q.share_token}/></div>}
           <Link href="/atencion" className="btn btn-primary">Continuar flujo →</Link>
         </div></td></tr>)}
       {!quotes?.length&&<tr><td colSpan={8} className="muted">Todavía no hay cotizaciones.</td></tr>}
