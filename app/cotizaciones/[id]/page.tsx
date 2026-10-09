@@ -28,7 +28,7 @@ export default async function QuoteDetailPage({params}:{params:Promise<{id:strin
   const stageLabel=({initial_quote:"Cotización orientativa",measurement_pending:"Medición externa pendiente",measurement_received:"Medición recibida",final_quote:"Configuración final",sale_completed:"Venta registrada"} as Record<string,string>)[quote.workflow_stage]||quote.workflow_stage;
   const opticalConfig=(quote.optical_configuration??{}) as {
     usage?:string;
-    od?:{product_code?:string;brand?:string;model?:string;design?:string;material?:string;index?:number|string;phi_mm?:number|string;coatings?:string[];lens_product_id?:string};
+    od?:{product_code?:string;brand?:string;model?:string;design?:string;material?:string;index?:number|string;phi_mm?:number|string;coatings?:string[];lens_product_id?:string;catalog_sale_price?:number|string};
     oi?:{product_code?:string;brand?:string;model?:string;design?:string;material?:string;index?:number|string;phi_mm?:number|string;coatings?:string[];lens_product_id?:string};
   };
 
@@ -58,9 +58,10 @@ export default async function QuoteDetailPage({params}:{params:Promise<{id:strin
         {quote.quote_kind==="final"&&(opticalConfig.od||opticalConfig.oi)&&<section className="quote-document-optical-config">
           <h3>Configuración de lunas por ojo</h3>
           <p className="quote-document-use">Uso declarado: {opticalConfig.usage||"No especificado"}</p>
-          <div className="table-wrap"><table><thead><tr><th>Ojo</th><th>Luna seleccionada</th><th>Diseño</th><th>Material / índice</th><th>PHI</th><th>Tratamientos</th></tr></thead><tbody>
-            {([{key:"OD · Derecho",config:opticalConfig.od},{key:"OI · Izquierdo",config:opticalConfig.oi}] as const).map(row=><tr key={row.key}><th>{row.key}</th><td>{row.config?[row.config.brand,row.config.model].filter(Boolean).join(" ")||row.config.product_code||"Selección manual":"Selección manual / pendiente"}</td><td>{row.config?.design||"·"}</td><td>{[row.config?.material,row.config?.index!=null?"Índice "+Number(row.config.index).toFixed(2):null].filter(Boolean).join(" · ")||"·"}</td><td>{row.config?.phi_mm!=null?Number(row.config.phi_mm)+" mm":"·"}</td><td>{(row.config?.coatings??[]).join(" · ")||"Según configuración / sin especificar"}</td></tr>)}
+          <div className="table-wrap"><table><thead><tr><th>Ojo</th><th>Luna seleccionada</th><th>Diseño</th><th>Material / índice</th><th>PHI</th><th>Precio cat. (ref.)</th><th>Tratamientos</th></tr></thead><tbody>
+            {([{key:"OD · Derecho",config:opticalConfig.od},{key:"OI · Izquierdo",config:opticalConfig.oi}] as const).map(row=><tr key={row.key}><th>{row.key}</th><td>{row.config?[row.config.brand,row.config.model].filter(Boolean).join(" ")||row.config.product_code||"Selección manual":"Selección manual / pendiente"}</td><td>{row.config?.design||"·"}</td><td>{[row.config?.material,row.config?.index!=null?"Índice "+Number(row.config.index).toFixed(2):null].filter(Boolean).join(" · ")||"·"}</td><td>{row.config?.phi_mm!=null?Number(row.config.phi_mm)+" mm":"·"}</td><td>{row.config?.catalog_sale_price!=null?money.format(Number(row.config.catalog_sale_price)):"·"}</td><td>{(row.config?.coatings??[]).join(" · ")||"Según configuración / sin especificar"}</td></tr>)}
           </tbody></table></div>
+          <p className="quote-document-use">El precio de catálogo por ojo es referencial: el total de la propuesta se calcula con las líneas económicas de arriba. Revisa que estas líneas reflejen la configuración OD/OI acordada y que no se duplique un precio por par.</p>
           <p className="quote-document-use">La receta y las medidas se verifican con el profesional y el laboratorio antes de fabricar.</p>
         </section>}
         <div className="quote-document-table table-wrap"><table><thead><tr><th>Producto / servicio</th><th>Tipo</th><th>Cant.</th><th>Precio unitario</th><th>Descuento</th><th>Total</th></tr></thead><tbody>
