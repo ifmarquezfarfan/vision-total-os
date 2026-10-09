@@ -127,7 +127,7 @@ export async function receiveQuoteMeasurement(formData: FormData) {
 
 export async function createFinalQuoteFromMeasurement(formData: FormData) {
   const parentId = String(formData.get("parent_quote_id") ?? "");
-  const discount = Number(formData.get("discount") ?? 0);
+  const discountPercent = Number(formData.get("discount_percent") ?? 0);
   const expiresRaw = String(formData.get("expires_at") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
   const recipeConfirmed = formData.get("recipe_confirmed") === "on";
@@ -140,7 +140,7 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
   const shareFinalQuote = formData.get("share_final_quote") === "on";
   if (!parentId) redirect("/atencion?error=Cotización%20de%20origen%20inválida");
   if (!recipeConfirmed) redirect("/atencion?error=Confirma%20que%20revisaste%20receta%2C%20montura%20y%20configuración%20con%20el%20cliente");
-  if (!Number.isFinite(discount) || discount < 0) redirect("/atencion?error=Descuento%20inválido");
+  if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) redirect("/atencion?error=El%20descuento%20debe%20estar%20entre%200%25%20y%20100%25");
 
   const itemCountRaw = Number(formData.get("item_count") ?? 0);
   const itemCount = Number.isFinite(itemCountRaw) ? Math.min(Math.max(Math.trunc(itemCountRaw), 1), 60) : 1;
@@ -163,16 +163,37 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
     });
   }
   if (!items.length) redirect("/atencion?error=Agrega%20al%20menos%20un%20componente");
+  const subtotalBeforeGlobal = items.reduce((sum, item) =>
+    sum + Math.max(Number(item.quantity || 1) * Number(item.unit_price || 0) - Number(item.discount || 0), 0), 0);
+  const discount = Math.round((subtotalBeforeGlobal * discountPercent / 100 + Number.EPSILON) * 100) / 100;
 
   const { supabase, organizationId, branchId } = await getContext();
   const { data: parent } = await supabase.from("quotes").select("id,organization_id,branch_id,workflow_stage,quote_kind,measurement_status,prescription_id,optical_configuration").eq("id",parentId).eq("organization_id",organizationId).eq("branch_id",branchId).maybeSingle();
   if (!parent || parent.workflow_stage !== "measurement_received" || parent.measurement_status !== "received" || !parent.prescription_id || parent.quote_kind !== "initial") redirect("/atencion?error=Primero%20debes%20registrar%20la%20medición%20externa");
 
   const parentConfiguration = parent.optical_configuration && typeof parent.optical_configuration === "object" ? parent.optical_configuration as Record<string,unknown> : {};
+  const allowedLensFamilies = ["Monofocal (lejos)", "Monofocal (cerca)", "Progresivo/Bifocal"];
+  const allowedLensMaterials = ["Resina simple", "Cristal-Vidrio", "CR-39 (NK-55)", "Policarbonato", "Trivex", "High Index (Premium)"];
+  const allowedLensTreatments = ["Antirrayas","Antirreflejo","Antiempañante","Protección UV 400","Filtro Azul-Violeta","Hidrofóbico/Oleofóbico","Polarizado","Fotocromático"];
+  const allowedLensSeries = ["pending_measurement","1era serie (0.25-2.00)","2da serie (2.25-4.00)","3ra serie (4.25-6.00)","4ta serie (>6.25)"];
+  const lensFamilyRaw = String(formData.get("lens_family") ?? "").trim();
+  const lensMaterialRaw = String(formData.get("lens_material") ?? "").trim();
+  const lensSeriesRaw = String(formData.get("lens_series") ?? "").trim();
+  if (lensFamilyRaw && !allowedLensFamilies.includes(lensFamilyRaw)) redirect("/atencion?error=Tipo%20de%20luna%20inválido");
+  if (lensMaterialRaw && !allowedLensMaterials.includes(lensMaterialRaw)) redirect("/atencion?error=Material%20óptico%20inválido");
+  if (lensSeriesRaw && !allowedLensSeries.includes(lensSeriesRaw)) redirect("/atencion?error=Serie%20óptica%20inválida");
+  const lensTreatmentsSubmitted = formData.get("lens_options_submitted") === "1";
+  const submittedTreatments = [...new Set(formData.getAll("lens_treatments").map((value) => String(value).trim()).filter((value) => allowedLensTreatments.includes(value)))];
   const finalConfiguration = {
     ...parentConfiguration,
     intended_use:intendedUse||parentConfiguration.intended_use||null,
     priority:priority||parentConfiguration.priority||null,
+    lens_family:lensFamilyRaw||parentConfiguration.lens_family||null,
+    lens_material:lensMaterialRaw||parentConfiguration.lens_material||null,
+    lens_treatments:lensTreatmentsSubmitted?submittedTreatments:(parentConfiguration.lens_treatments||[]),
+    lens_series:lensSeriesRaw||parentConfiguration.lens_series||"pending_measurement",
+    package_brand:String(formData.get("package_brand")??"").trim().slice(0,180)||parentConfiguration.package_brand||null,
+    price_note:String(formData.get("price_note")??"").trim().slice(0,300)||parentConfiguration.price_note||"Precio confirmado después de la medición",
     mounting_type:mountingType||null,
     right_lens_spec:rightLensSpec||null,
     left_lens_spec:leftLensSpec||null,

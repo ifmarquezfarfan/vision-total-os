@@ -461,3 +461,150 @@ input,select,textarea{min-width:0}
 .public-quote-total-breakdown{display:grid;gap:7px;padding-top:13px;color:#70859a}
 .public-quote-total-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px}
 .public-quote-total-breakdown strong{font-size:11px;color:#49657e;font-variant-numeric:tabular-nums}
+
+
+/* Cotización óptica: ficha técnica inspirada en el formato físico de Visión Total */
+.quote-options-card{
+  border:1px solid #dfe7f0;
+  border-radius:16px;
+  background:linear-gradient(180deg,#fbfdff 0%,#fff 100%);
+  padding:22px;
+  display:grid;
+  gap:20px;
+  margin:8px 0 4px;
+  box-shadow:0 2px 9px rgba(33,70,104,.035)
+}
+.quote-options-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-bottom:16px;border-bottom:1px solid #e4ebf3}
+.quote-options-heading>div{min-width:0}
+.quote-options-heading h3{margin:6px 0 6px;font-size:20px;letter-spacing:-.025em;color:#233c55}
+.quote-options-heading p{margin:0;max-width:720px;font-size:12px;line-height:1.6;color:#718196}
+.quote-options-mark{width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;border-radius:13px;color:#fff;font-size:13px;font-weight:900;letter-spacing:.05em;background:linear-gradient(145deg,#26a3f3,#0879cf);box-shadow:0 5px 13px rgba(18,129,208,.18)}
+.quote-options-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;align-items:stretch}
+.quote-options-fieldset{min-width:0;margin:0;padding:15px;border:1px solid #e0e7ef;border-radius:12px;background:#fff;display:grid;align-content:start;gap:12px}
+.quote-options-fieldset legend{padding:0 5px;font-size:12px;line-height:1.35;font-weight:800;color:#304a63}
+.quote-choice{display:flex;gap:9px;align-items:flex-start;min-width:0;font-size:12px;line-height:1.45;color:#43576b;cursor:pointer}
+.quote-choice input{width:15px;height:15px;flex:0 0 auto;margin:1px 0 0;accent-color:#1788d4}
+.quote-choice span{overflow-wrap:anywhere}
+.quote-treatment-fieldset{grid-column:span 2}
+.quote-treatment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.quote-package-fields{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:15px;border:1px solid #dce9f6;border-radius:12px;background:#f5faff}
+.quote-options-footnote{grid-column:1/-1;margin:0;font-size:11px;line-height:1.55;color:#688099}
+.quote-builder-intro{padding:14px 2px 6px}
+.quote-builder-intro h3{font-size:18px;color:#293f55;margin:5px 0}
+.quote-builder-intro p{font-size:12px;line-height:1.55;margin:0;max-width:740px}
+#nueva-cotizacion .form-grid{align-items:start}
+#nueva-cotizacion>.form{gap:18px}
+#nueva-cotizacion .form-grid>.field{min-width:0}
+#nueva-cotizacion .form-grid>.field[style*="span 2"]{grid-column:1/-1!important}
+#nueva-cotizacion .table-wrap input,#nueva-cotizacion .table-wrap select{min-width:85px;padding:9px 10px;border:1px solid #d9e2ec;border-radius:7px;background:#fff;color:#2b3f53}
+#nueva-cotizacion .table-wrap input:focus,#nueva-cotizacion .table-wrap select:focus{outline:3px solid rgba(32,143,222,.12);border-color:#2593df}
+#nueva-cotizacion .sale-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid #e1eaf3;border-radius:10px;background:#f8fbff}
+#nueva-cotizacion .sale-summary>div{display:flex;gap:9px;align-items:baseline}
+#nueva-cotizacion .sale-summary strong{font-variant-numeric:tabular-nums;color:#253f58}
+.quote-options-card .field-hint{line-height:1.45}
+
+/* Customer-facing quote sheet: clear header, specification panel and printing */
+.public-quote-header{align-items:center;flex-wrap:wrap;padding:15px 0}
+.public-quote-contact{display:grid;gap:4px;flex:1;min-width:200px;font-size:11px;line-height:1.4;color:#566d82}
+.public-quote-contact span{overflow-wrap:anywhere}
+.public-quote-hero{align-items:center}
+.public-quote-client-line{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-top:14px;padding:11px 13px;border:1px solid #e1eaf3;border-radius:9px;background:#fff;max-width:470px}
+.public-quote-client-line span{font-size:10px;color:#8191a2}
+.public-quote-client-line strong{font-size:13px;color:#294763}
+.public-quote-spec-card{margin:0 0 18px;background:#fff;border:1px solid #dfe8f1;border-radius:17px;overflow:hidden;box-shadow:0 8px 24px rgba(42,71,98,.035)}
+.public-quote-spec-heading{padding:20px 23px 16px;border-bottom:1px solid #e6edf4;background:linear-gradient(110deg,#f3faff,#fff)}
+.public-quote-spec-heading>span{font-size:9px;letter-spacing:.14em;font-weight:900;color:#1485d3}
+.public-quote-spec-heading h2{font-size:18px;margin:7px 0 5px;color:#23435f}
+.public-quote-spec-heading p{font-size:11px;color:#71859a;line-height:1.55;margin:0;max-width:730px}
+.public-quote-spec-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.public-quote-spec-grid>div{min-width:0;display:grid;align-content:start;gap:7px;padding:16px 18px;border-bottom:1px solid #ecf1f5;border-right:1px solid #ecf1f5}
+.public-quote-spec-grid>div:nth-child(3n){border-right:0}
+.public-quote-spec-grid>div small{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8a9aab}
+.public-quote-spec-grid>div strong{font-size:12px;line-height:1.5;color:#354f67;overflow-wrap:anywhere}
+.public-quote-spec-package{grid-column:span 1}
+.public-quote-spec-treatments{grid-column:span 2}
+.public-quote-tags{display:flex;flex-wrap:wrap;gap:6px}
+.public-quote-tags span{font-size:10px;color:#286d9f;background:#eef7ff;border:1px solid #dceefa;border-radius:6px;padding:5px 7px}
+.public-quote-price-note{padding:12px 16px;margin:0;font-size:11px;line-height:1.5;color:#5d7690;background:#f8fbfe;border-top:1px solid #e7eef5}
+.public-quote-card{margin-bottom:0}
+.public-quote-table td,.public-quote-table th{overflow-wrap:anywhere}
+.public-quote-total-breakdown{margin-top:6px}
+.public-quote-provisional{background:#fff8ea;border-color:#f0dfb9}
+.public-quote-provisional strong{color:#835d1c}
+.public-quote-footer{max-width:800px;margin:0 auto}
+.public-quote-footer span{max-width:760px}
+
+@media(max-width:1050px){
+  .quote-options-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quote-options-fieldset{min-width:0}
+  .quote-treatment-fieldset{grid-column:span 2}
+  .quote-package-fields{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .quote-options-card{padding:15px;border-radius:12px;gap:15px}
+  .quote-options-heading{gap:10px}
+  .quote-options-heading h3{font-size:17px}
+  .quote-options-mark{width:39px;height:39px;border-radius:10px}
+  .quote-options-grid{grid-template-columns:1fr}
+  .quote-options-fieldset,.quote-treatment-fieldset{grid-column:auto;padding:13px}
+  .quote-treatment-grid{grid-template-columns:1fr}
+  .quote-package-fields{grid-column:auto;padding:12px}
+  .public-quote-header{align-items:flex-start}
+  .public-quote-contact{flex-basis:100%;order:3;padding:10px 0 0;border-top:1px solid #e5edf4}
+  .public-quote-spec-heading{padding:16px}
+  .public-quote-spec-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .public-quote-spec-grid>div{padding:13px;border-right:1px solid #ecf1f5}
+  .public-quote-spec-grid>div:nth-child(3n){border-right:1px solid #ecf1f5}
+  .public-quote-spec-grid>div:nth-child(2n){border-right:0}
+  .public-quote-spec-treatments{grid-column:1/-1}
+  .quote-builder-intro h3{font-size:16px}
+}
+@media print{
+  @page publicquote{size:A4;margin:12mm}
+  .public-quote-page{page:publicquote;color:#111!important;background:#fff!important;padding:0!important;font-size:10pt}
+  .public-quote-header{max-width:none!important;min-height:45px!important;padding:0 0 8px!important;border-bottom:2px solid #111!important;gap:12px!important}
+  .public-quote-brand>span{background:#fff!important;color:#111!important;border:1px solid #111!important;box-shadow:none!important}
+  .public-quote-brand strong{font-size:10pt!important;color:#111!important}
+  .public-quote-brand small,.public-quote-contact{color:#333!important}
+  .public-quote-security,.public-quote-card-title .btn,.copy-link-control,.public-quote-next{display:none!important}
+  .public-quote-content{max-width:none!important;padding-top:8mm!important}
+  .public-quote-hero{margin-bottom:5mm!important}
+  .public-quote-hero h1{font-size:22pt!important;color:#111!important}
+  .public-quote-status>div,.public-quote-spec-card,.public-quote-card{box-shadow:none!important;background:#fff!important;border:1px solid #999!important;border-radius:0!important;break-inside:avoid}
+  .public-quote-status{margin-bottom:4mm!important}
+  .public-quote-status>div{padding:8px!important}
+  .public-quote-spec-heading{background:#fff!important;padding:10px 12px!important}
+  .public-quote-spec-grid>div{padding:9px 10px!important;border-color:#bbb!important}
+  .public-quote-spec-grid>div small,.public-quote-spec-grid>div strong,.public-quote-spec-heading h2,.public-quote-spec-heading p,.public-quote-spec-heading>span{color:#111!important}
+  .public-quote-tags span{background:#fff!important;color:#111!important;border:1px solid #aaa!important}
+  .public-quote-price-note,.public-quote-provisional,.public-quote-confirmed{background:#fff!important;color:#111!important;border:1px solid #aaa!important}
+  .public-quote-total strong{color:#111!important}
+  .public-quote-total-breakdown,.public-quote-total{color:#111!important}
+  .public-quote-footer{color:#333!important;padding-top:8mm!important}
+}
+
+/* Real-time quote totals: subtotal, percent discount and proposed total */
+.quote-price-summary{border:1px solid #dce8f4;background:#f7fbff;border-radius:13px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:stretch}
+.quote-price-summary-lines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px}
+.quote-price-summary-lines>div{display:grid;align-content:center;gap:5px;min-width:0}
+.quote-price-summary-lines>div>span,.quote-price-summary-lines>div>label{font-size:11px;color:#657a8e}
+.quote-price-summary-lines>div>strong{font-size:15px;color:#2e4962;font-variant-numeric:tabular-nums}
+.quote-discount-input>div{display:flex;align-items:center;gap:7px;max-width:160px}
+.quote-discount-input input{width:100%;min-width:0;padding:8px 9px;border:1px solid #cdddea;border-radius:7px;background:#fff;font-weight:700;color:#23435f}
+.quote-discount-input>div>span{color:#55738c;font-weight:800}
+.quote-discount-input small{font-size:10px;color:#8395a6;line-height:1.35}
+.quote-price-summary-lines .quote-price-grand-total{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:12px;border-top:1px solid #dbe7f1;padding-top:12px}
+.quote-price-summary-lines .quote-price-grand-total>span{font-size:12px;font-weight:800;color:#234e70}
+.quote-price-summary-lines .quote-price-grand-total>strong{font-size:25px;letter-spacing:-.03em;color:#1484d1}
+.quote-price-summary-meta{font-size:10px;line-height:1.5;color:#8393a3;align-self:end;white-space:nowrap}
+.quote-price-summary-meta strong{color:#45647e;font-size:13px}
+@media(max-width:650px){
+  .quote-price-summary{grid-template-columns:1fr;padding:13px}
+  .quote-price-summary-lines{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .quote-price-summary-lines .quote-price-grand-total>strong{font-size:22px}
+  .quote-price-summary-meta{white-space:normal}
+}
+@media print{
+  .public-quote-contact{font-size:8pt!important}
+  .public-quote-spec-card,.public-quote-card,.public-quote-status{break-inside:avoid}
+}
