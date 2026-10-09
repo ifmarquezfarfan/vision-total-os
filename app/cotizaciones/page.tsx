@@ -6,7 +6,7 @@ import { ConfirmSubmit } from "@/components/confirm-submit";
 import { QuoteBuilder } from "@/components/quote-builder";
 import { QuickStart } from "@/components/quick-start";
 
-export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string}>}) {
+export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string;from_quote?:string;stage?:string}>}) {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user) redirect("/login");
@@ -15,15 +15,22 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
   if(!membership||!branch) redirect("/onboarding");
 
   const [{data:clients},{data:leads},{data:products},{data:quotes}]=await Promise.all([
-    supabase.from("clients").select("id,full_name,dni").order("full_name").limit(300),
-    supabase.from("leads").select("id,lead_code,full_name,stage").order("created_at",{ascending:false}).limit(300),
-    supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price").eq("active",true).order("brand").limit(300),
-    supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id").order("quote_at",{ascending:false}).limit(120)
+    supabase.from("clients").select("id,full_name,dni,phone,whatsapp,email").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("status","active").order("full_name").limit(500),
+    supabase.from("leads").select("id,lead_code,full_name,stage").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("created_at",{ascending:false}).limit(300),
+    supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price,lens_design,lens_material,lens_index,lens_phi_mm,lens_coatings,lens_sphere_min,lens_sphere_max,lens_cylinder_min,lens_cylinder_max").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("active",true).order("brand").limit(500),
+    supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id,workflow_stage,quote_kind,measurement_status,requires_measurement,parent_quote_id").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("quote_at",{ascending:false}).limit(150)
   ]);
 
   const clientMap=new Map((clients??[]).map(c=>[c.id,c.full_name]));
   const leadMap=new Map((leads??[]).map(l=>[l.id,l.lead_code]));
   const params=await searchParams;
+  const parentId=String(params.from_quote??"");
+  const [{data:parentQuote},{data:parentItems}]=parentId?await Promise.all([
+    supabase.from("quotes").select("id,quote_code,client_id,workflow_stage,measurement_status,prescription_id,notes,discount,measurement_provider").eq("id",parentId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
+    supabase.from("quote_items").select("product_id,component_type,description,quantity,unit_price,unit_cost,discount").eq("quote_id",parentId).order("id")
+  ]):[{data:null},{data:null}];
+  const parentClient=parentQuote?.client_id?(clients??[]).find(c=>c.id===parentQuote.client_id):null;
+  const finalMode=Boolean(parentId);
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Cotizaciones</strong><span className="muted">{user.email}</span></header><div className="content">
     <h1 className="page-title">Cotizaciones</h1><p className="subtitle">Convierte una oportunidad en una venta sin perder el contexto comercial.</p>
