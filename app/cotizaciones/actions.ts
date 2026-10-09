@@ -86,6 +86,46 @@ export async function createQuote(formData: FormData) {
     parentQuote = parent;
   }
 
+  const lensUsage = String(formData.get("lens_usage") ?? "").trim();
+  const odLensId = String(formData.get("lens_product_id_od") ?? "").trim() || null;
+  const oiLensId = String(formData.get("lens_product_id_oi") ?? "").trim() || null;
+  const odCoatings = [...new Set(formData.getAll("lens_coatings_od").map(value=>String(value).trim()).filter(Boolean))];
+  const oiCoatings = [...new Set(formData.getAll("lens_coatings_oi").map(value=>String(value).trim()).filter(Boolean))];
+  const allowedCoatings = new Set(["Antirreflejo","Filtro UV","Filtro azul","Fotocromático","Polarizado","Antirrayas","Hidrofóbico","Oleofóbico","Espejado"]);
+  if ([...odCoatings,...oiCoatings].some(coating=>!allowedCoatings.has(coating))) {
+    redirect("/atencion?error=Hay%20un%20tratamiento%20de%20luna%20inválido");
+  }
+
+  const lensSnapshots: Record<"od"|"oi", Record<string, unknown> | null> = { od: null, oi: null };
+  for (const [eye, productId] of [["od",odLensId],["oi",oiLensId]] as const) {
+    if (!productId) continue;
+    if (!parentQuote) redirect("/cotizaciones?error=La%20selección%20por%20ojo%20solo%20se%20guarda%20en%20la%20configuración%20final");
+    const { data: lens } = await supabase.from("products")
+      .select("id,product_code,category,brand,model,description,cost,sale_price,lens_design,lens_material,lens_index,lens_phi_mm,lens_coatings,lens_sphere_min,lens_sphere_max,lens_cylinder_min,lens_cylinder_max,lens_prism_capable")
+      .eq("id",productId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("active",true).maybeSingle();
+    if (!lens || lens.category !== "Lentes") redirect("/atencion?error=La%20luna%20seleccionada%20no%20está%20activa%20en%20el%20catálogo%20de%20esta%20sucursal");
+    lensSnapshots[eye] = {
+      lens_product_id:lens.id,
+      product_code:lens.product_code,
+      brand:lens.brand,
+      model:lens.model,
+      description:lens.description,
+      design:lens.lens_design,
+      material:lens.lens_material,
+      index:lens.lens_index,
+      phi_mm:lens.lens_phi_mm,
+      coatings:eye==="od"?odCoatings:oiCoatings,
+      catalog_coatings:lens.lens_coatings??[],
+      sphere_min:lens.lens_sphere_min,
+      sphere_max:lens.lens_sphere_max,
+      cylinder_min:lens.lens_cylinder_min,
+      cylinder_max:lens.lens_cylinder_max,
+      prism_capable:lens.lens_prism_capable,
+      catalog_sale_price:lens.sale_price,
+      catalog_cost:lens.cost
+    };
+  }
+
   const itemCountRaw = Number(formData.get("item_count") ?? 0);
   const itemCount = Number.isFinite(itemCountRaw) ? Math.min(Math.max(Math.trunc(itemCountRaw), 1), 60) : 1;
   const items: Array<Record<string, unknown>> = [];
@@ -141,6 +181,12 @@ export async function createQuote(formData: FormData) {
     measurement_notes: parentQuote?.measurement_notes || null,
     prescription_id: parentQuote?.prescription_id || null,
     parent_quote_id: parentQuote?.id || null,
+    optical_configuration: parentQuote ? {
+      usage:lensUsage || null,
+      od:{...(lensSnapshots.od??{}),lens_product_id:odLensId,coatings:odCoatings},
+      oi:{...(lensSnapshots.oi??{}),lens_product_id:oiLensId,coatings:oiCoatings},
+      captured_at:new Date().toISOString()
+    } : {},
     finalized_at: stage === "final_quote" ? new Date().toISOString() : null,
   };
   const { error: metadataError } = await supabase.from("quotes").update(metadata)
