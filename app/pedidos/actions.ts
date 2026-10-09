@@ -26,6 +26,7 @@ export async function createOrder(formData:FormData){
   const lab=String(formData.get("lab")??"").trim();
   const labReference=String(formData.get("lab_reference")??"").trim();
   const lensType=String(formData.get("lens_type")??"").trim();
+  const lensUsage=String(formData.get("lens_usage")??"").trim();
   const treatmentOptions=formData.getAll("treatment_option").map((value)=>String(value).trim()).filter(Boolean);
   const otherTreatments=String(formData.get("treatments_other")??"").trim();
   const rightCoatings=[...new Set(formData.getAll("right_lens_coatings").map(value=>String(value).trim()).filter(Boolean))];
