@@ -9,7 +9,7 @@ type QuoteInitialItem={productId?:string|null;productText?:string;componentType?
 const options=[["frame","Montura"],["lens_od","Lunas OD"],["lens_os","Lunas OI"],["lens","Lunas (sin asignar)"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 
-export function QuoteBuilder({products,initialItems=[]}:{products:Product[];initialItems?:QuoteInitialItem[]}) {
+export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotización"}:{products:Product[];initialItems?:QuoteInitialItem[];submitLabel?:string}) {
   const [rows,setRows]=useState<Row[]>(()=>initialItems.length?initialItems.map((item,index)=>({
     id:index+1,productId:item.productId??"",productText:item.productText??"",componentType:item.componentType??"other",
     description:item.description??"",quantity:Math.max(1,Number(item.quantity??1)),price:String(item.price??""),
@@ -22,7 +22,9 @@ export function QuoteBuilder({products,initialItems=[]}:{products:Product[];init
   const selectProduct=(id:number,text:string)=>{
     const p=codeMap.get(text.trim().toLowerCase());
     if(!p){update(id,{productId:"",productText:text});return;}
-    const componentType=p.category?.toLowerCase().includes("montura")?"frame":p.category?.toLowerCase().includes("lente")?"lens":"other";
+    const currentType=rows.find((row)=>row.id===id)?.componentType;
+    const guessedType=p.category?.toLowerCase().includes("montura")?"frame":p.category?.toLowerCase().includes("lente")?"lens":"other";
+    const componentType=p.category?.toLowerCase().includes("lente")&&(currentType==="lens_od"||currentType==="lens_os")?currentType:guessedType;
     update(id,{productId:p.id,productText:p.product_code,componentType,description:p.description||[p.brand,p.model].filter(Boolean).join(" "),price:Number(p.sale_price||0).toFixed(2),cost:Number(p.cost||0).toFixed(2)});
   };
   const replacePreset=(types:string[])=>setRows(types.map((componentType,i)=>({...emptyRow(i+1),componentType,description:componentType==="frame"?"Montura":componentType==="lens_od"?"Lunas ojo derecho":componentType==="lens_os"?"Lunas ojo izquierdo":componentType==="lens"?"Lunas":componentType==="treatment"?"Tratamiento":""})));
@@ -64,7 +66,7 @@ export function QuoteBuilder({products,initialItems=[]}:{products:Product[];init
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
       <button type="button" className="btn btn-secondary" onClick={addBlock}>+ Agregar 3 líneas</button>
       <button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar 1 línea</button>
-      <button type="submit" className="btn btn-primary">Crear cotización</button>
+      <button type="submit" className="btn btn-primary">{submitLabel}</button>
     </div>
   </div>;
 }
