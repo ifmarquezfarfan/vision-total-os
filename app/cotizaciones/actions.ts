@@ -261,13 +261,14 @@ export async function convertQuoteToSale(formData: FormData) {
   const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
   const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id",user.id).eq("active",true).limit(1).maybeSingle();
   if (!membership || !branch) redirect("/onboarding");
-  const { data: quote } = await supabase.from("quotes").select("id,workflow_stage,measurement_status,requires_measurement")
+  const { data: quote } = await supabase.from("quotes").select("id,workflow_stage,measurement_status,requires_measurement,total")
     .eq("id",quoteId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle();
   if (!quote) redirect("/atencion?error=Cotización%20no%20encontrada");
   if (quote.workflow_stage !== "final_quote" || (quote.requires_measurement && quote.measurement_status !== "received")) {
     redirect("/atencion?error=Completa%20la%20medición%20y%20la%20configuración%20final%20antes%20de%20cobrar");
   }
-  if (!Number.isFinite(paid) || paid < 0) redirect("/atencion?error=El%20pago%20inicial%20no%20es%20válido");
+  if (!Number.isFinite(paid) || paid < 0 || paid > Number(quote.total) + 0.01) redirect("/atencion?error=Revisa%20el%20importe%20que%20se%20va%20a%20cobrar");
+  if (paid > 0 && !paymentMethod) redirect("/atencion?error=Selecciona%20el%20medio%20de%20pago");
   const { data, error } = await supabase.rpc("convert_quote_to_sale_transaction", {
     target_quote: quoteId,
     target_payment_method: paymentMethod || null,
