@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { createQuote, updateQuoteStatus, convertQuoteToSale, deleteQuote } from "./actions";
+import { createQuote, updateQuoteStatus, deleteQuote } from "./actions";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { QuoteBuilder } from "@/components/quote-builder";
 import { QuickStart } from "@/components/quick-start";
+import { ClientIntakePicker } from "@/components/client-intake-picker";
+import { CopyLinkButton } from "@/components/copy-link-button";
 
 export default async function QuotesPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;updated?:string;converted?:string;deleted?:string}>}) {
   const supabase=await createClient();
@@ -15,10 +18,10 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
   if(!membership||!branch) redirect("/onboarding");
 
   const [{data:clients},{data:leads},{data:products},{data:quotes}]=await Promise.all([
-    supabase.from("clients").select("id,full_name,dni").order("full_name").limit(300),
+    supabase.from("clients").select("id,full_name,dni,phone,whatsapp").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("status","active").order("full_name").limit(800),
     supabase.from("leads").select("id,lead_code,full_name,stage").order("created_at",{ascending:false}).limit(300),
     supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price").eq("active",true).order("brand").limit(300),
-    supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id").order("quote_at",{ascending:false}).limit(120)
+    supabase.from("quotes").select("id,quote_code,quote_at,expires_at,client_id,lead_id,subtotal,discount,total,status,sale_id,quote_kind,workflow_stage,measurement_status,parent_quote_id,share_token,share_enabled,share_expires_at").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("quote_at",{ascending:false}).limit(200)
   ]);
 
   const clientMap=new Map((clients??[]).map(c=>[c.id,c.full_name]));
@@ -26,11 +29,11 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
   const params=await searchParams;
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Cotizaciones</strong><span className="muted">{user.email}</span></header><div className="content">
-    <h1 className="page-title">Cotizaciones</h1><p className="subtitle">Convierte una oportunidad en una venta sin perder el contexto comercial.</p>
+    <h1 className="page-title">Cotizaciones</h1><p className="subtitle">La primera cotización orienta. Después de la medición externa se prepara la cotización final y el cobro se hace desde Atención al cliente.</p>
     <QuickStart title="Inicio rápido de cotización" hint="Empieza con una estructura sugerida y deja claro qué debe ocurrir después." items={[
       {label:"Cotización óptica",href:"#nueva-cotizacion",description:"Montura + lunas + tratamiento",tone:"green"},
       {label:"Segundo / tercer par",href:"#nueva-cotizacion",description:"Agrega otro bloque de 3 líneas",tone:"blue"},
-      {label:"Convertir a venta",href:"#historial-cotizaciones",description:"Cuando el cliente acepta",tone:"purple"},
+      {label:"Continuar atención",href:"/atencion",description:"Medición → final → pago",tone:"purple"},
       {label:"Seguimiento",href:"/seguimientos",description:"Agenda el contacto posterior",tone:"orange"}
     ]}/>
     {params.error&&<p className="notice" style={{marginTop:18}}>{params.error}</p>}
@@ -41,20 +44,27 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
 
     <section id="nueva-cotizacion" className="card section"><h2>Nueva cotización</h2><form action={createQuote} className="form">
       <div className="form-grid">
-        <div className="field"><label>Cliente</label><select name="client_id" defaultValue=""><option value="">Sin cliente</option>{(clients??[]).map(c=><option key={c.id} value={c.id}>{c.full_name}{c.dni?` · ${c.dni}`:""}</option>)}</select></div>
+        <div className="field" style={{gridColumn:"span 2"}}><label>Cliente *</label><ClientIntakePicker clients={clients??[]}/></div>
         <div className="field"><label>Lead</label><select name="lead_id" defaultValue=""><option value="">Sin lead</option>{(leads??[]).map(l=><option key={l.id} value={l.id}>{l.lead_code} · {l.full_name}</option>)}</select></div>
-        <div className="field"><label>Vigencia</label><input name="expires_at" type="date"/></div>
-        <div className="field"><label>Descuento global</label><input name="discount" type="number" min="0" step="0.01" defaultValue="0"/></div>
-        <div className="field" style={{gridColumn:"span 2"}}><label>Notas</label><input name="notes"/></div>
+        <div className="field"><label>Vigencia de cotización</label><input name="expires_at" type="date"/></div>
+        <div className="field"><label>Descuento global (S/)</label><input name="discount" type="number" min="0" step="0.01" defaultValue="0"/></div>
+        <div className="field"><label>Uso principal</label><select name="intended_use" defaultValue=""><option value="">Por determinar</option><option>Uso diario</option><option>Pantallas / oficina</option><option>Lectura</option><option>Conducción</option><option>Exterior / deporte</option><option>Ocupacional</option><option>Multifocal / progresivo</option><option>Otro</option></select></div>
+        <div className="field"><label>Prioridad del cliente</label><select name="priority" defaultValue=""><option value="">Por determinar</option><option>Precio</option><option>Equilibrio precio-calidad</option><option>Calidad / duración</option><option>Diseño / estética</option><option>Comodidad / peso</option></select></div>
+        <div className="field"><label>Presupuesto de referencia (S/)</label><input name="budget_reference" type="number" min="0" step="0.01" placeholder="Opcional"/></div>
+        <div className="field"><label>Canal de la cotización</label><select name="sale_channel" defaultValue="Presencial"><option>Presencial</option><option>WhatsApp</option><option>Web</option><option>Otro</option></select></div>
+        <div className="field" style={{gridColumn:"span 2"}}><label className="checkline"><input type="checkbox" name="share_quote" defaultChecked/> Generar enlace privado para compartir por WhatsApp o web</label><span className="field-hint">El enlace muestra los componentes y precios, caduca en 14 días y no revela el DNI ni datos internos.</span></div>
+        <div className="field" style={{gridColumn:"span 2"}}><label>Necesidad / preferencia que explicó el cliente</label><textarea name="client_preference" rows={2} placeholder="Uso, comodidad, estilo, presupuesto o dudas a resolver"/></div>
+        <div className="field" style={{gridColumn:"span 2"}}><label>Notas internas</label><input name="notes" placeholder="Detalles relevantes para la cotización"/></div>
       </div>
       <QuoteBuilder products={products??[]}/>
     </form></section>
 
-    <section id="historial-cotizaciones" className="section"><h2>Historial</h2><div className="table-wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Lead</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+    <section id="historial-cotizaciones" className="section"><div className="spread"><div><h2>Historial</h2><p className="muted">La etapa indica qué toca hacer a continuación; el cobro final se completa en Atención al cliente.</p></div><Link href="/atencion" className="btn btn-secondary">Abrir flujo de atención</Link></div><div className="table-wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Lead</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
       {(quotes??[]).map(q=><tr key={q.id}><td>{q.quote_code}</td><td>{new Date(q.quote_at).toLocaleDateString("es-PE")}</td><td>{q.client_id?clientMap.get(q.client_id)||"Cliente":"·"}</td><td>{q.lead_id?leadMap.get(q.lead_id)||"Lead":"·"}</td><td>S/ {Number(q.total).toFixed(2)}</td><td>{q.expires_at?new Date(q.expires_at).toLocaleDateString("es-PE"):"·"}</td>
-        <td><span className={`status-badge ${q.status==="accepted"?"status-success":q.status==="sent"?"status-info":q.status==="converted"?"status-purple":q.status==="rejected"||q.status==="cancelled"?"status-danger":"status-warning"}`}>{({draft:"Borrador",sent:"Enviada",accepted:"Aceptada",rejected:"Rechazada",expired:"Vencida",converted:"Convertida",cancelled:"Cancelada"} as Record<string,string>)[q.status]||q.status}</span></td><td><div className="action-stack">
+        <td><span className={"status-badge "+(q.workflow_stage==="sale_completed"?"status-success":q.workflow_stage==="final_quote"?"status-info":q.workflow_stage==="measurement_pending"?"status-warning":q.workflow_stage==="measurement_received"?"status-purple":"status-neutral")}>{({initial_quote:"Cotización inicial",measurement_pending:"Medición pendiente",measurement_received:"Medición recibida",final_quote:"Cotización final",sale_completed:"Venta completada",cancelled:"Cancelada"} as Record<string,string>)[q.workflow_stage]||q.workflow_stage}</span><div className="field-hint">{({initial_quote:"Enviar a medir",measurement_pending:"Esperar receta",measurement_received:"Preparar cotización final",final_quote:"Confirmar pago",sale_completed:"Operación finalizada"} as Record<string,string>)[q.workflow_stage]||""}</div></td><td><div className="action-stack">
           <form action={updateQuoteStatus} className="inline"><input type="hidden" name="quote_id" value={q.id}/><select name="status" defaultValue={q.status}><option value="draft">Borrador</option><option value="sent">Enviada</option><option value="accepted">Aceptada</option><option value="rejected">Rechazada</option><option value="expired">Vencida</option><option value="cancelled">Cancelada</option></select><button className="btn btn-secondary">Guardar</button></form>
-          {!["converted","cancelled","rejected"].includes(q.status) && <form action={convertQuoteToSale} className="inline"><input type="hidden" name="quote_id" value={q.id}/><select name="payment_method" defaultValue=""><option value="">Pago</option><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option><option>Otro</option></select><input name="paid_amount" type="number" min="0" step="0.01" placeholder="Pagado"/><input name="responsible" placeholder="Responsable"/><button className="btn btn-primary">Convertir</button></form>}
+          {q.share_enabled&&q.share_token&&<div className="inline"><Link href={"/cotizacion/"+q.share_token} target="_blank" className="btn btn-secondary">Ver enlace</Link><CopyLinkButton path={"/cotizacion/"+q.share_token}/></div>}
+          <Link href="/atencion" className="btn btn-primary">Continuar flujo →</Link>
         </div></td></tr>)}
       {!quotes?.length&&<tr><td colSpan={8} className="muted">Todavía no hay cotizaciones.</td></tr>}
     </tbody></table></div></section>

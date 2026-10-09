@@ -33,6 +33,7 @@ export async function Sidebar() {
         </div>
         <div className="nav-group">
           <span>Operación</span>
+          <Link href="/atencion">Atención al cliente</Link>
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/clientes">Clientes</Link>
           <Link href="/leads">Leads</Link>
