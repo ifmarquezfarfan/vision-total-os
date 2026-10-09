@@ -18,12 +18,13 @@ function finalStarterRows():Row[]{return [
   {...emptyRow(4),componentType:"treatment",description:"Tratamientos confirmados"}
 ];}
 
-export function QuoteBuilder({products,initialItems=[],submitLabel="Guardar cotización",mode="initial"}:{products:Product[];initialItems?:QuoteInitialItem[];submitLabel?:string;mode?:"initial"|"final"}) {
+export function QuoteBuilder({products,initialItems=[],submitLabel="Guardar cotización",mode="initial",initialDiscountPercent=0}:{products:Product[];initialItems?:QuoteInitialItem[];submitLabel?:string;mode?:"initial"|"final";initialDiscountPercent?:number}) {
   const [rows,setRows]=useState<Row[]>(()=>initialItems.length?initialItems.map((item,index)=>({
     id:index+1,productId:item.productId??"",productText:item.productText??"",componentType:item.componentType??"other",
     description:item.description??"",quantity:Math.max(1,Number(item.quantity??1)),price:String(item.price??""),
     cost:String(item.cost??""),discount:String(item.discount??"0")
   })):mode==="final"?finalStarterRows():starterRows());
+  const [discountPercent,setDiscountPercent]=useState(String(initialDiscountPercent));
   const map=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
 
@@ -47,7 +48,9 @@ export function QuoteBuilder({products,initialItems=[],submitLabel="Guardar coti
     return [...cur,emptyRow(base+1),emptyRow(base+2),emptyRow(base+3)];
   });
   const addRow=()=>setRows(cur=>[...cur,emptyRow(Math.max(...cur.map(r=>r.id),0)+1)]);
-  const total=rows.reduce((s,r)=>s+Math.max(Number(r.quantity||0)*Number(r.price||0)-Number(r.discount||0),0),0);
+  const subtotal=rows.reduce((sum,row)=>sum+Math.max(Number(row.quantity||0)*Number(row.price||0)-Number(row.discount||0),0),0);
+  const discountAmount=Math.round((subtotal*Math.min(Math.max(Number(discountPercent)||0,0),100)/100+Number.EPSILON)*100)/100;
+  const total=Math.max(subtotal-discountAmount,0);
 
   return <div>
     <div className="quote-suggestions">
@@ -79,7 +82,15 @@ export function QuoteBuilder({products,initialItems=[],submitLabel="Guardar coti
     </tbody></table></div>
     <datalist id="quote-products">{products.map(p=><option key={p.id} value={p.product_code}>{[p.brand,p.model,p.description].filter(Boolean).join(" ")} · S/ {Number(p.sale_price).toFixed(2)}</option>)}</datalist>
     <input type="hidden" name="item_count" value={rows.length}/>
-    <div className="sale-summary" style={{marginTop:14}}><div><strong>{rows.length}</strong> {rows.length===1?"línea":"líneas"}</div><div><span className="muted">Subtotal estimado</span><strong>S/ {total.toFixed(2)}</strong></div></div>
+    <div className="quote-price-summary" style={{marginTop:14}}>
+      <div className="quote-price-summary-lines">
+        <div><span>Subtotal</span><strong>S/ {subtotal.toFixed(2)}</strong></div>
+        <div className="quote-discount-input"><label htmlFor="quote-discount-percent">Descuento global (%)</label><div><input id="quote-discount-percent" name="discount_percent" type="number" min="0" max="100" step="0.5" value={discountPercent} onChange={event=>setDiscountPercent(event.target.value)} aria-describedby="quote-discount-hint"/><span>%</span></div><small id="quote-discount-hint">El descuento se calcula sobre el subtotal.</small></div>
+        <div><span>Descuento calculado</span><strong>− S/ {discountAmount.toFixed(2)}</strong></div>
+        <div className="quote-price-grand-total"><span>{mode==="final"?"Total final propuesto":"Total orientativo"}</span><strong>S/ {total.toFixed(2)}</strong></div>
+      </div>
+      <div className="quote-price-summary-meta"><strong>{rows.length}</strong> {rows.length===1?"línea":"líneas"} · {mode==="final"?"Configura los productos elegidos":"Estimación antes de medir"}</div>
+    </div>
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
       <button type="button" className="btn btn-secondary" onClick={addBlock}>+ Agregar 3 líneas</button>
       <button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar 1 línea</button>
