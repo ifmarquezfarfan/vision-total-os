@@ -4,10 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { QuoteBuilder } from "@/components/quote-builder";
 import { createFinalQuoteFromMeasurement } from "../../actions";
+import { QuoteOptionsFields, type QuoteOpticalConfiguration } from "@/components/quote-options-fields";
 
 type ProductRow = {id:string;product_code:string;category:string|null;brand:string|null;model:string|null;description:string|null;cost:number|string;sale_price:number|string};
 type QuoteItemRow = {product_id:string|null;description:string|null;component_type:string|null;quantity:number|string;unit_price:number|string;unit_cost:number|string;discount:number|string};
-type Configuration = {intended_use?:string|null;priority?:string|null;budget_reference?:number|string|null;client_preference?:string|null;sale_channel?:string|null};
+type Configuration = QuoteOpticalConfiguration;
 
 const fmt = (value:unknown) => value===null||value===undefined||value===""?"·":(Number(value)>0?"+":"")+Number(value).toFixed(2);
 const money = (value:unknown) => "S/ "+Number(value||0).toFixed(2);
@@ -92,6 +93,7 @@ export default async function FinalQuotePage({params,searchParams}:{params:Promi
           <div className="field"><label>Especificación de luna OI</label><input name="left_lens_spec" placeholder="Marca, material, diseño o indicación"/></div>
         </div>
       </section>
+      <QuoteOptionsFields values={config} mode="final"/>
       <section className="card section">
         <div className="spread final-quote-builder-heading"><div><h2 style={{marginBottom:5}}>Composición y precio final</h2><p className="muted">Las líneas iniciales están precargadas. Cambia los códigos, agrega OD/OI por separado, ajusta precios y elimina lo que ya no se ofrecerá.</p></div><Link href="/buscador-lunas" className="btn btn-secondary">Buscar una luna</Link></div>
         <QuoteBuilder products={products} initialItems={initialItems} submitLabel="Crear cotización final →"/>
@@ -100,7 +102,7 @@ export default async function FinalQuotePage({params,searchParams}:{params:Promi
         <label className="checkline final-quote-confirm"><input type="checkbox" name="share_final_quote" defaultChecked={["Web","WhatsApp"].includes(String(config.sale_channel||""))}/> Generar enlace privado para compartir la cotización final por WhatsApp o web (caduca en 14 días).</label>
         <div className="form-grid" style={{marginTop:14}}>
           <div className="field"><label>Vigencia de la propuesta final</label><input name="expires_at" type="date"/></div>
-          <div className="field"><label>Descuento final (S/)</label><input name="discount" type="number" min="0" step="0.01" defaultValue="0"/></div>
+          <div className="field"><label>Descuento final (%)</label><input name="discount_percent" type="number" min="0" max="100" step="0.5" defaultValue="0"/><span className="field-hint">Se aplicará al subtotal de los componentes definitivos.</span></div>
           <div className="field" style={{gridColumn:"span 2"}}><label>Notas para el cliente / taller</label><textarea name="notes" rows={2} defaultValue={parent.notes||""} placeholder="Incluye lo acordado, no reinterpretaciones de la receta."/></div>
         </div>
         <label className="checkline final-quote-confirm"><input type="checkbox" name="recipe_confirmed" required/> Confirmo que verifiqué la receta, los componentes OD/OI, tratamientos, precio y elección con el cliente.</label>
