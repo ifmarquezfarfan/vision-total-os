@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./vision-total-theme.css";
 import type { Metadata } from "next";
 import { AccountMenu } from "@/components/account-menu";
 
