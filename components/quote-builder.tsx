@@ -6,7 +6,7 @@ type Product={id:string;product_code:string;category:string|null;brand:string|nu
 type Row={id:number;productId:string;productText:string;componentType:string;description:string;quantity:number;price:string;cost:string;discount:string};
 type QuoteInitialItem={productId?:string|null;productText?:string;componentType?:string|null;description?:string|null;quantity?:number|string;price?:number|string;cost?:number|string;discount?:number|string};
 
-const options=[["frame","Montura"],["lens_od","Lunas OD"],["lens_os","Lunas OI"],["lens","Lunas (sin asignar)"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
+const options=[["frame","Montura"],["lens_od","Lunas OD"],["lens_os","Lunas OI"],["lens","Lunas (sin asignar)"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["package","Paquete óptico"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 function starterRows():Row[]{return [
   {...emptyRow(1),componentType:"frame",description:"Montura"},
@@ -34,6 +34,11 @@ export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotiza
     update(id,{productId:p.id,productText:p.product_code,componentType,description:p.description||[p.brand,p.model].filter(Boolean).join(" "),price:Number(p.sale_price||0).toFixed(2),cost:Number(p.cost||0).toFixed(2)});
   };
   const replacePreset=(types:string[])=>setRows(types.map((componentType,i)=>({...emptyRow(i+1),componentType,description:componentType==="frame"?"Montura":componentType==="lens_od"?"Lunas ojo derecho":componentType==="lens_os"?"Lunas ojo izquierdo":componentType==="lens"?"Lunas":componentType==="treatment"?"Tratamiento":""})));
+  const applyPackage=(level:"Básico"|"Intermedio"|"Premium")=>setRows([{
+    ...emptyRow(1),
+    componentType:"package",
+    description:`Paquete óptico orientativo · ${level}`
+  }]);
   const addBlock=()=>setRows(cur=>{
     const base=Math.max(...cur.map(r=>r.id),0);
     return [...cur,emptyRow(base+1),emptyRow(base+2),emptyRow(base+3)];
@@ -43,11 +48,14 @@ export function QuoteBuilder({products,initialItems=[],submitLabel="Crear cotiza
 
   return <div>
     <div className="quote-suggestions">
-      <div><div className="eyebrow">Sugerencias para cotizar</div><strong>Parte de una estructura óptica común y ajusta solo lo necesario.</strong><p className="muted">Las plantillas vienen de la misma lógica de Inicio rápido de Ventas.</p></div>
+      <div><div className="eyebrow">Sugerencias para cotizar</div><strong>Arma un paquete orientativo o detalla montura, OD, OI y tratamientos por separado.</strong><p className="muted">Las plantillas no asignan precios: ingresa el importe real que quieras comunicar al cliente.</p></div>
       <div className="chip-row">
         <button type="button" className="chip-button" onClick={()=>replacePreset(["frame","lens_od","lens_os","treatment"])}><span>Montura + OD + OI + AR</span><small>4 líneas · recomendada</small></button>
         <button type="button" className="chip-button" onClick={()=>replacePreset(["frame","lens_od","lens_os"])}><span>Montura + ambas lunas</span><small>3 líneas</small></button>
         <button type="button" className="chip-button" onClick={()=>replacePreset(["lens_od","lens_os","treatment"])}><span>OD + OI + tratamiento</span><small>3 líneas</small></button>
+        <button type="button" className="chip-button" onClick={()=>applyPackage("Básico")}><span>Paquete básico</span><small>Una sola estimación</small></button>
+        <button type="button" className="chip-button" onClick={()=>applyPackage("Intermedio")}><span>Paquete intermedio</span><small>Una sola estimación</small></button>
+        <button type="button" className="chip-button" onClick={()=>applyPackage("Premium")}><span>Paquete premium</span><small>Una sola estimación</small></button>
         <button type="button" className="chip-button" onClick={addBlock}><span>+ Otro bloque</span><small>3 líneas más</small></button>
       </div>
     </div>
