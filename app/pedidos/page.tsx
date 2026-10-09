@@ -35,7 +35,7 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
   const selectedLens = primaryLensId ? (lensProducts ?? []).find(p => p.id === primaryLensId) : null;
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Pedidos ópticos</strong><span className="muted">{user.email}</span></header><div className="content">
-    <div className="spread"><div><h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">La orden de laboratorio concentra receta de lejos/cerca, prisma, centrado, montura, diseño/material/índice/PHI, recubrimientos, QC, entrega y adaptación.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/ventas" className="btn btn-secondary">Volver a ventas</Link></div></div>
+    <div className="spread"><div><h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">La orden de laboratorio concentra receta de lejos/cerca, prisma, centrado, montura, diseño/material/índice/PHI, recubrimientos, QC, entrega y adaptación.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/buscador-lunas" className="btn btn-primary">Buscar lunas</Link><Link href="/ventas" className="btn btn-secondary">Volver a ventas</Link></div></div>
     <QuickStart title="Inicio rápido de pedido óptico" hint="Ruta recomendada: venta → receta → montura → configuración de luna → medidas → laboratorio → QC → aviso → entrega." items={[
       {label:"Pedido desde venta",href:"#nuevo-pedido",description:"Mantén el contexto completo",tone:"green"},
       {label:"Captura especializada",href:"#configuracion-optica",description:"Lunas, tratamientos y laboratorio",tone:"blue"},
@@ -76,7 +76,7 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
               <label className="checkline"><input type="checkbox" name="treatment_option" value="Fotocromático" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Fotocromático")} /> Fotocromático</label>
               <label className="checkline"><input type="checkbox" name="treatment_option" value="Polarizado" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Polarizado")} /> Polarizado</label>
               <label className="checkline"><input type="checkbox" name="treatment_option" value="Antirrayas" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Antirrayas")} /> Antirrayas</label>
-              <label className="checkline"><input type="checkbox" name="treatment_option" value="Hidrofóbico / fácil limpieza" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Hidrofóbico")} /> Hidrofóbico / fácil limpieza</label>
+              <label className="checkline"><input type="checkbox" name="treatment_option" value="Hidrofóbico" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Hidrofóbico")} /> Hidrofóbico / fácil limpieza</label>
               <label className="checkline"><input type="checkbox" name="treatment_option" value="Oleofóbico" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Oleofóbico")} /> Oleofóbico</label>
               <label className="checkline"><input type="checkbox" name="treatment_option" value="Espejado" defaultChecked={(selectedLens?.lens_coatings??[]).includes("Espejado")} /> Espejado</label>
             </div></div>
