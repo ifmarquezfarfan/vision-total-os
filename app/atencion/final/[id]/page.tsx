@@ -40,7 +40,7 @@ export default async function FinalQuotePage({params,searchParams}:{params:Promi
     supabase.from("products").select("id,product_code,category,brand,model,description,cost,sale_price").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("active",true).order("brand").limit(500)
   ]);
   if(!rx) redirect("/atencion?error=No%20se%20encontró%20la%20receta%20vinculada%20a%20esta%20atención");
-  const products=(productRows??[]) as ProductRow[];
+  const products=((productRows??[]) as ProductRow[]).map((product)=>({...product,cost:Number(product.cost||0),sale_price:Number(product.sale_price||0)}));
   const productMap=new Map<string,ProductRow>(products.map(product=>[product.id,product]));
   const items=(initialItemsRaw??[]) as QuoteItemRow[];
   const initialItems=items.map(item=>{
