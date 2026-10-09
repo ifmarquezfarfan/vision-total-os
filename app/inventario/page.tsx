@@ -45,7 +45,7 @@ export default async function InventoryPage({searchParams}:{searchParams:Promise
   const canManage=membership.role==="owner"||membership.role==="admin";
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Inventario</strong><span className="muted">{user.email}</span></header><div className="content">
-    <div className="spread"><div><h1 className="page-title">Inventario</h1><p className="subtitle">Catálogo, stock, ubicación y estado físico en una sola vista.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/importacion" className="btn btn-secondary">Importar Excel</Link></div></div>
+    <div className="spread"><div><h1 className="page-title">Inventario</h1><p className="subtitle">Catálogo, stock, ubicación y estado físico en una sola vista.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/buscador-lunas" className="btn btn-primary">Buscador de lunas</Link><Link href="/importacion" className="btn btn-secondary">Importar Excel</Link></div></div>
     <QuickStart title="Inicio rápido de inventario" hint="Crear → ubicar → revisar stock → reponer." items={[
       {label:"Nuevo producto",href:"#nuevo-producto",description:"Registra la ficha del artículo",tone:"blue"},
       {label:"Ajustar stock",href:"#ajustar-stock",description:"Entrada o salida controlada",tone:"green"},
