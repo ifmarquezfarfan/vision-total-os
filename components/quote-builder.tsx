@@ -9,8 +9,24 @@ type InitialItem={product_id:string|null;component_type:string;description:strin
 const options=[["frame","Montura"],["lens","Lunas"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 
-export function QuoteBuilder({products}:{products:Product[]}) {
-  const [rows,setRows]=useState<Row[]>([emptyRow(1)]);
+export function QuoteBuilder({products,initialItems=[]}:{products:Product[];initialItems?:InitialItem[]}) {
+  const [rows,setRows]=useState<Row[]>(()=>{
+    if(!initialItems.length) return [emptyRow(1)];
+    return initialItems.map((item,index)=>{
+      const product=products.find((candidate)=>candidate.id===item.product_id);
+      return {
+        id:index+1,
+        productId:product?.id||"",
+        productText:product?.product_code||"",
+        componentType:item.component_type||"other",
+        description:item.description||"",
+        quantity:Number(item.quantity)||1,
+        price:Number(item.unit_price||0).toFixed(2),
+        cost:Number(item.unit_cost||0).toFixed(2),
+        discount:Number(item.discount||0).toFixed(2)
+      };
+    });
+  });
   const map=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
 
