@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
+import { CopyLinkButton } from "@/components/copy-link-button";
 import { sendQuoteToMeasurement, receiveQuoteMeasurement, completeFinalQuoteSale } from "./actions";
 
 type QuoteRow = {
@@ -70,7 +71,7 @@ function PrescriptionFields() {
   </>;
 }
 
-export default async function AttentionPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;sent_to_measurement?:string;measurement_received?:string;prescription?:string;final_created?:string;completed?:string}>}) {
+export default async function AttentionPage({searchParams}:{searchParams:Promise<{error?:string;created?:string;sent_to_measurement?:string;measurement_received?:string;prescription?:string;final_created?:string;completed?:string;share?:string}>}) {
   const supabase = await createClient();
   const {data:{user}} = await supabase.auth.getUser();
   if(!user) redirect("/login");
@@ -115,6 +116,7 @@ export default async function AttentionPage({searchParams}:{searchParams:Promise
 
     {params.error&&<div className="notice notice-error attention-alert">{params.error}</div>}
     {params.created&&<div className="notice attention-alert">Cotización inicial <strong>{params.created}</strong> guardada con la ficha del cliente.</div>}
+    {params.share&&<div className="attention-share-box"><div><strong>Enlace privado listo para compartir</strong><p>El cliente verá los componentes y precios, sin DNI ni datos internos. Caduca en 14 días.</p></div><div className="inline"><Link href={"/cotizacion/"+params.share} target="_blank" className="btn btn-secondary">Abrir vista del cliente</Link><CopyLinkButton path={"/cotizacion/"+params.share} label="Copiar enlace"/></div></div>}
     {params.sent_to_measurement&&<div className="notice attention-alert">Envío a medición registrado. La atención queda en espera del resultado.</div>}
     {params.measurement_received&&<div className="notice attention-alert">Medición y receta guardadas. Ahora puedes preparar la cotización definitiva.</div>}
     {params.final_created&&<div className="notice attention-alert">Cotización final <strong>{params.final_created}</strong> lista para revisar y cobrar.</div>}
