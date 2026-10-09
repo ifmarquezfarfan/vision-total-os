@@ -560,8 +560,8 @@ input,select,textarea{min-width:0}
   .quote-builder-intro h3{font-size:16px}
 }
 @media print{
-  @page{margin:12mm}
-  .public-quote-page{color:#111!important;background:#fff!important;padding:0!important;font-size:10pt}
+  @page publicquote{size:A4;margin:12mm}
+  .public-quote-page{page:publicquote;color:#111!important;background:#fff!important;padding:0!important;font-size:10pt}
   .public-quote-header{max-width:none!important;min-height:45px!important;padding:0 0 8px!important;border-bottom:2px solid #111!important;gap:12px!important}
   .public-quote-brand>span{background:#fff!important;color:#111!important;border:1px solid #111!important;box-shadow:none!important}
   .public-quote-brand strong{font-size:10pt!important;color:#111!important}
@@ -581,4 +581,30 @@ input,select,textarea{min-width:0}
   .public-quote-total strong{color:#111!important}
   .public-quote-total-breakdown,.public-quote-total{color:#111!important}
   .public-quote-footer{color:#333!important;padding-top:8mm!important}
+}
+
+/* Real-time quote totals: subtotal, percent discount and proposed total */
+.quote-price-summary{border:1px solid #dce8f4;background:#f7fbff;border-radius:13px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:stretch}
+.quote-price-summary-lines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px}
+.quote-price-summary-lines>div{display:grid;align-content:center;gap:5px;min-width:0}
+.quote-price-summary-lines>div>span,.quote-price-summary-lines>div>label{font-size:11px;color:#657a8e}
+.quote-price-summary-lines>div>strong{font-size:15px;color:#2e4962;font-variant-numeric:tabular-nums}
+.quote-discount-input>div{display:flex;align-items:center;gap:7px;max-width:160px}
+.quote-discount-input input{width:100%;min-width:0;padding:8px 9px;border:1px solid #cdddea;border-radius:7px;background:#fff;font-weight:700;color:#23435f}
+.quote-discount-input>div>span{color:#55738c;font-weight:800}
+.quote-discount-input small{font-size:10px;color:#8395a6;line-height:1.35}
+.quote-price-summary-lines .quote-price-grand-total{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:12px;border-top:1px solid #dbe7f1;padding-top:12px}
+.quote-price-summary-lines .quote-price-grand-total>span{font-size:12px;font-weight:800;color:#234e70}
+.quote-price-summary-lines .quote-price-grand-total>strong{font-size:25px;letter-spacing:-.03em;color:#1484d1}
+.quote-price-summary-meta{font-size:10px;line-height:1.5;color:#8393a3;align-self:end;white-space:nowrap}
+.quote-price-summary-meta strong{color:#45647e;font-size:13px}
+@media(max-width:650px){
+  .quote-price-summary{grid-template-columns:1fr;padding:13px}
+  .quote-price-summary-lines{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .quote-price-summary-lines .quote-price-grand-total>strong{font-size:22px}
+  .quote-price-summary-meta{white-space:normal}
+}
+@media print{
+  .public-quote-contact{font-size:8pt!important}
+  .public-quote-spec-card,.public-quote-card,.public-quote-status{break-inside:avoid}
 }
