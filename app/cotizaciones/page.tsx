@@ -25,7 +25,7 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
   const params=await searchParams;
   const parentId=String(params.from_quote??"");
   const [{data:parentQuote},{data:parentItems}]=parentId?await Promise.all([
-    supabase.from("quotes").select("id,quote_code,client_id,workflow_stage,measurement_status,prescription_id,notes,discount,measurement_provider").eq("id",parentId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
+    supabase.from("quotes").select("id,quote_code,client_id,workflow_stage,measurement_status,prescription_id,notes,discount,measurement_provider,optical_configuration").eq("id",parentId).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle(),
     supabase.from("quote_items").select("product_id,component_type,description,quantity,unit_price,unit_cost,discount").eq("quote_id",parentId).order("id")
   ]):[{data:null},{data:null}];
   const parentClient=parentQuote?.client_id?(clients??[]).find(c=>c.id===parentQuote.client_id):null;
@@ -34,6 +34,11 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
       .eq("id",parentQuote.prescription_id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle()
     : {data:null};
   const finalMode=Boolean(parentId);
+  const opticalConfig = (parentQuote?.optical_configuration ?? {}) as {
+    usage?: string;
+    od?: { lens_product_id?: string; coatings?: string[] };
+    oi?: { lens_product_id?: string; coatings?: string[] };
+  };
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>{finalMode?"Configuración final":"Cotización inicial"}</strong><span className="muted">{user.email}</span></header><div className="content quote-workspace">
     <div className="quote-flow-header">
@@ -50,6 +55,26 @@ export default async function QuotesPage({searchParams}:{searchParams:Promise<{e
     {parentId&&!parentQuote&&<div className="notice notice-error section">No encontramos una cotización válida para configurar. Vuelve a Atención óptica y revisa su estado.</div>}
     {finalMode&&parentQuote&&<div className="notice quote-context-notice section"><strong>Configuración final a partir de {parentQuote.quote_code}</strong><span>Cliente: {parentClient?.full_name||"Cliente"} · La medición queda vinculada. Se copiaron los productos de la cotización inicial para ajustar solo lo necesario.</span></div>}
     {finalMode&&parentPrescription&&<section className="card section quote-rx-summary"><div><span className="eyebrow">RECETA VINCULADA</span><h2>Medición recibida · {parentPrescription.rx_type||"Uso no indicado"}</h2><p className="muted">Revisa estos valores antes de elegir la configuración. La receta original sigue siendo la referencia.</p></div><div className="table-wrap"><table><thead><tr><th>Ojo</th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>ADD</th><th>Cerca SPH</th><th>Prisma H / V</th></tr></thead><tbody><tr><th>OD · Derecho</th><td>{parentPrescription.od_sphere??"·"}</td><td>{parentPrescription.od_cylinder??"·"}</td><td>{parentPrescription.od_axis??"·"}</td><td>{parentPrescription.od_add??"·"}</td><td>{parentPrescription.od_near_sphere??"·"}</td><td>{parentPrescription.od_prism_horizontal??"·"} {parentPrescription.od_prism_horizontal_base||""} / {parentPrescription.od_prism_vertical??"·"} {parentPrescription.od_prism_vertical_base||""}</td></tr><tr><th>OI · Izquierdo</th><td>{parentPrescription.os_sphere??"·"}</td><td>{parentPrescription.os_cylinder??"·"}</td><td>{parentPrescription.os_axis??"·"}</td><td>{parentPrescription.os_add??"·"}</td><td>{parentPrescription.os_near_sphere??"·"}</td><td>{parentPrescription.os_prism_horizontal??"·"} {parentPrescription.os_prism_horizontal_base||""} / {parentPrescription.os_prism_vertical??"·"} {parentPrescription.os_prism_vertical_base||""}</td></tr></tbody></table></div><p className="field-hint">DP binocular: {parentPrescription.pd??"·"} mm · OD: {parentPrescription.pd_od??"·"} mm · OI: {parentPrescription.pd_os??"·"} mm · Formato de cilindro: {parentPrescription.cylinder_notation==="positive"?"positivo":"negativo"}</p></section>}
+    {finalMode&&parentQuote&&<section className="card section quote-lens-selection">
+      <div className="quote-section-head"><div><span className="eyebrow">CONFIGURACIÓN DE FABRICACIÓN</span><h2>Selecciona las lunas por ojo</h2><p className="muted">OD y OI pueden usar modelos distintos. Se guardará la referencia técnica de cada elección para recuperar el pedido después.</p></div></div>
+      <div className="form-grid">
+        <div className="field"><label>Uso principal de los lentes</label><select name="lens_usage" defaultValue={opticalConfig.usage||parentPrescription?.rx_type||""}><option value="">No especificado</option><option value="Lejos">Lejos</option><option value="Cerca">Cerca</option><option value="Lejos y cerca">Lejos y cerca</option><option value="Bifocal">Bifocal</option><option value="Progresivo">Progresivo</option><option value="Ocupacional">Ocupacional</option><option value="Sol graduado">Sol graduado</option><option value="Otro">Otro</option></select></div>
+        <div className="field"><label>Regla de precio</label><div className="notice">El precio final se calcula con las líneas de la cotización inferior. Revisa esas líneas para que reflejen la configuración elegida por ojo, evitando duplicar un paquete de lunas.</div></div>
+      </div>
+      <div className="quote-eye-grid">
+        <div className="quote-eye-card">
+          <div className="quote-eye-heading"><span>OD</span><div><strong>Ojo derecho</strong><small>Esfera {parentPrescription?.od_sphere??"·"} · Cil. {parentPrescription?.od_cylinder??"·"} · Eje {parentPrescription?.od_axis??"·"}°</small></div></div>
+          <div className="field"><label>Producto de luna OD</label><select name="lens_product_id_od" defaultValue={opticalConfig.od?.lens_product_id||""}><option value="">Manual / por confirmar</option>{(products??[]).filter(p=>p.category==="Lentes").map(p=><option key={p.id} value={p.id}>{p.product_code} · {[p.brand,p.model].filter(Boolean).join(" ")} · {p.lens_index!=null?"Índice "+Number(p.lens_index).toFixed(2)+" · ":""}S/ {Number(p.sale_price).toFixed(2)}</option>)}</select></div>
+          <div className="field"><label>Tratamientos OD</label><div className="check-grid">{["Antirreflejo","Filtro UV","Filtro azul","Fotocromático","Polarizado","Antirrayas","Hidrofóbico","Oleofóbico","Espejado"].map(value=><label className="checkline" key={value}><input type="checkbox" name="lens_coatings_od" value={value} defaultChecked={(opticalConfig.od?.coatings??[]).includes(value)}/>{value}</label>)}</div></div>
+        </div>
+        <div className="quote-eye-card">
+          <div className="quote-eye-heading"><span>OI</span><div><strong>Ojo izquierdo</strong><small>Esfera {parentPrescription?.os_sphere??"·"} · Cil. {parentPrescription?.os_cylinder??"·"} · Eje {parentPrescription?.os_axis??"·"}°</small></div></div>
+          <div className="field"><label>Producto de luna OI</label><select name="lens_product_id_oi" defaultValue={opticalConfig.oi?.lens_product_id||""}><option value="">Manual / por confirmar</option>{(products??[]).filter(p=>p.category==="Lentes").map(p=><option key={p.id} value={p.id}>{p.product_code} · {[p.brand,p.model].filter(Boolean).join(" ")} · {p.lens_index!=null?"Índice "+Number(p.lens_index).toFixed(2)+" · ":""}S/ {Number(p.sale_price).toFixed(2)}</option>)}</select></div>
+          <div className="field"><label>Tratamientos OI</label><div className="check-grid">{["Antirreflejo","Filtro UV","Filtro azul","Fotocromático","Polarizado","Antirrayas","Hidrofóbico","Oleofóbico","Espejado"].map(value=><label className="checkline" key={value}><input type="checkbox" name="lens_coatings_oi" value={value} defaultChecked={(opticalConfig.oi?.coatings??[]).includes(value)}/>{value}</label>)}</div></div>
+        </div>
+      </div>
+      <p className="field-hint">Estos datos quedan guardados en la cotización y pasan al pedido óptico. Antes de enviar al laboratorio, confirma disponibilidad, índices, PHI y compatibilidad con el proveedor.</p>
+    </section>}
 
     <section id="nueva-cotizacion" className="card section quote-form-card">
       <div className="quote-section-head"><div><span className="eyebrow">{finalMode?"PASO 3":"PASO 1"}</span><h2>{finalMode?"Revisar la combinación definitiva":"Datos del cliente y propuesta inicial"}</h2><p className="muted">{finalMode?"Verifica materiales, diseño, precio y tratamientos con la receta ya recibida.":"Primero identifica a la persona. La cotización puede quedar como estimación hasta recibir la medición correcta."}</p></div></div>
