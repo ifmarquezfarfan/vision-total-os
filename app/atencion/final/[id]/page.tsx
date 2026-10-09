@@ -97,7 +97,8 @@ export default async function FinalQuotePage({params,searchParams}:{params:Promi
         <QuoteBuilder products={products} initialItems={initialItems} submitLabel="Crear cotización final →"/>
       </section>
       <section className="card section">
-        <div className="form-grid">
+        <label className="checkline final-quote-confirm"><input type="checkbox" name="share_final_quote" defaultChecked={["Web","WhatsApp"].includes(String(config.sale_channel||""))}/> Generar enlace privado para compartir la cotización final por WhatsApp o web (caduca en 14 días).</label>
+        <div className="form-grid" style={{marginTop:14}}>
           <div className="field"><label>Vigencia de la propuesta final</label><input name="expires_at" type="date"/></div>
           <div className="field"><label>Descuento final (S/)</label><input name="discount" type="number" min="0" step="0.01" defaultValue="0"/></div>
           <div className="field" style={{gridColumn:"span 2"}}><label>Notas para el cliente / taller</label><textarea name="notes" rows={2} defaultValue={parent.notes||""} placeholder="Incluye lo acordado, no reinterpretaciones de la receta."/></div>
