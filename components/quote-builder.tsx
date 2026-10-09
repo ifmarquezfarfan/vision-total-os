@@ -9,7 +9,23 @@ const options=[["frame","Montura"],["lens","Lunas"],["treatment","Tratamiento"],
 function emptyRow(id:number):Row{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 
 export function QuoteBuilder({products}:{products:Product[]}) {
-  const [rows,setRows]=useState<Row[]>([emptyRow(1)]);
+  const [rows,setRows]=useState<Row[]>(()=>{
+    if(!initialItems.length)return [emptyRow(1)];
+    return initialItems.map((item,index)=>{
+      const product=item.product_id?products.find(p=>p.id===item.product_id):null;
+      return {
+        id:index+1,
+        productId:item.product_id||"",
+        productText:product?.product_code||"",
+        componentType:item.component_type||"other",
+        description:item.description||"",
+        quantity:Number(item.quantity)||1,
+        price:String(item.unit_price??""),
+        cost:String(item.unit_cost??""),
+        discount:String(item.discount??"0")
+      };
+    });
+  });
   const map=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
 
@@ -30,11 +46,14 @@ export function QuoteBuilder({products}:{products:Product[]}) {
 
   return <div>
     <div className="quote-suggestions">
-      <div><div className="eyebrow">Sugerencias para cotizar</div><strong>Parte de una estructura óptica común y ajusta solo lo necesario.</strong><p className="muted">Las plantillas vienen de la misma lógica de Inicio rápido de Ventas.</p></div>
+      <div><div className="eyebrow">{mode==="final"?"CONFIGURACIÓN DEFINITIVA":"PROPUESTA ORIENTATIVA"}</div><strong>{mode==="final"?"Ajusta la selección con la medición a la vista.":"Puedes estimar por paquetes aunque todavía no se haya elegido una marca o referencia concreta."}</strong><p className="muted">Las plantillas solo preparan las líneas. Introduce los precios reales que vayas a ofrecer; no se asignan precios automáticos.</p></div>
       <div className="chip-row">
         <button type="button" className="chip-button" onClick={()=>replacePreset(["frame","lens","treatment"])}><span>Montura + lunas + AR</span><small>3 líneas</small></button>
         <button type="button" className="chip-button" onClick={()=>replacePreset(["frame","lens"])}><span>Montura + lunas</span><small>2 líneas</small></button>
         <button type="button" className="chip-button" onClick={()=>replacePreset(["lens","treatment"])}><span>Lunas + tratamiento</span><small>2 líneas</small></button>
+        {mode==="initial"&&<button type="button" className="chip-button" onClick={()=>setRows([{...emptyRow(1),componentType:"other",description:"Paquete orientativo · Básico"}])}><span>Paquete básico</span><small>Estimación general</small></button>}
+        {mode==="initial"&&<button type="button" className="chip-button" onClick={()=>setRows([{...emptyRow(1),componentType:"other",description:"Paquete orientativo · Intermedio"}])}><span>Paquete intermedio</span><small>Estimación general</small></button>}
+        {mode==="initial"&&<button type="button" className="chip-button" onClick={()=>setRows([{...emptyRow(1),componentType:"other",description:"Paquete orientativo · Premium"}])}><span>Paquete premium</span><small>Estimación general</small></button>}
         <button type="button" className="chip-button" onClick={addBlock}><span>+ Otro bloque</span><small>3 líneas más</small></button>
       </div>
     </div>
@@ -55,11 +74,11 @@ export function QuoteBuilder({products}:{products:Product[]}) {
     </tbody></table></div>
     <datalist id="quote-products">{products.map(p=><option key={p.id} value={p.product_code}>{[p.brand,p.model,p.description].filter(Boolean).join(" ")} · S/ {Number(p.sale_price).toFixed(2)}</option>)}</datalist>
     <input type="hidden" name="item_count" value={rows.length}/>
-    <div className="sale-summary" style={{marginTop:14}}><div><strong>{rows.length}</strong> {rows.length===1?"línea":"líneas"}</div><div><span className="muted">Subtotal estimado</span><strong>S/ {total.toFixed(2)}</strong></div></div>
+    <div className="sale-summary" style={{marginTop:14}}><div><strong>{rows.length}</strong> {rows.length===1?"línea":"líneas"}</div><div><span className="muted">{mode==="final"?"Subtotal de configuración":"Estimación antes de descuentos"}</span><strong>S/ {total.toFixed(2)}</strong></div></div>
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
       <button type="button" className="btn btn-secondary" onClick={addBlock}>+ Agregar 3 líneas</button>
       <button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar 1 línea</button>
-      <button type="submit" className="btn btn-primary">Crear cotización</button>
+      <button type="submit" className="btn btn-primary">{mode==="final"?"Guardar configuración final":"Guardar cotización inicial"}</button>
     </div>
   </div>;
 }
