@@ -137,6 +137,7 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
   const rightLensSpec = String(formData.get("right_lens_spec") ?? "").trim();
   const leftLensSpec = String(formData.get("left_lens_spec") ?? "").trim();
   const treatmentNotes = String(formData.get("final_treatment_notes") ?? "").trim();
+  const shareFinalQuote = formData.get("share_final_quote") === "on";
   if (!parentId) redirect("/atencion?error=Cotización%20de%20origen%20inválida");
   if (!recipeConfirmed) redirect("/atencion?error=Confirma%20que%20revisaste%20receta%2C%20montura%20y%20configuración%20con%20el%20cliente");
   if (!Number.isFinite(discount) || discount < 0) redirect("/atencion?error=Descuento%20inválido");
@@ -176,6 +177,7 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
     left_lens_spec:leftLensSpec||null,
     final_treatment_notes:treatmentNotes||null,
     recipe_and_configuration_confirmed:true,
+    share_final_quote:shareFinalQuote,
     final_configuration_confirmed_at:new Date().toISOString()
   };
   const { data, error } = await supabase.rpc("create_final_quote_transaction", {
@@ -187,8 +189,8 @@ export async function createFinalQuoteFromMeasurement(formData: FormData) {
     target_configuration: finalConfiguration
   });
   if (error) redirect("/atencion?error=" + encodeURIComponent(friendlyError(error.message || "")));
-  const result = data as { quote_code?: string } | null;
-  redirect("/atencion?final_created=" + encodeURIComponent(result?.quote_code || "1"));
+  const result = data as { quote_code?: string; share_token?: string } | null;
+  redirect("/atencion?final_created=" + encodeURIComponent(result?.quote_code || "1") + (result?.share_token ? "&share=" + encodeURIComponent(result.share_token) : ""));
 }
 
 export async function completeFinalQuoteSale(formData: FormData) {
