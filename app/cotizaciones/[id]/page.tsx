@@ -17,7 +17,7 @@ export default async function QuoteDetailPage({params}:{params:Promise<{id:strin
   if(!membership||!branch) redirect("/onboarding");
 
   const {data:quote}=await supabase.from("quotes")
-    .select("id,quote_code,quote_at,expires_at,client_id,subtotal,discount,total,status,notes,workflow_stage,quote_kind,requires_measurement,measurement_status,parent_quote_id,sale_id,organization_id,branch_id")
+    .select("id,quote_code,quote_at,expires_at,client_id,subtotal,discount,total,status,notes,workflow_stage,quote_kind,requires_measurement,measurement_status,parent_quote_id,sale_id,organization_id,branch_id,optical_configuration")
     .eq("id",id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle();
   if(!quote) redirect("/cotizaciones?error=Cotización%20no%20encontrada");
   const [{data:client},{data:items},{data:parent}] = await Promise.all([
@@ -26,6 +26,11 @@ export default async function QuoteDetailPage({params}:{params:Promise<{id:strin
     quote.parent_quote_id ? supabase.from("quotes").select("quote_code").eq("id",quote.parent_quote_id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle() : Promise.resolve({data:null})
   ]);
   const stageLabel=({initial_quote:"Cotización orientativa",measurement_pending:"Medición externa pendiente",measurement_received:"Medición recibida",final_quote:"Configuración final",sale_completed:"Venta registrada"} as Record<string,string>)[quote.workflow_stage]||quote.workflow_stage;
+  const opticalConfig=(quote.optical_configuration??{}) as {
+    usage?:string;
+    od?:{product_code?:string;brand?:string;model?:string;design?:string;material?:string;index?:number|string;phi_mm?:number|string;coatings?:string[];lens_product_id?:string};
+    oi?:{product_code?:string;brand?:string;model?:string;design?:string;material?:string;index?:number|string;phi_mm?:number|string;coatings?:string[];lens_product_id?:string};
+  };
 
   return <div className="shell quote-print-shell"><Sidebar/><main className="main">
     <header className="topbar"><strong>Vista de cotización</strong><span className="muted">{user.email}</span></header>
@@ -50,6 +55,14 @@ export default async function QuoteDetailPage({params}:{params:Promise<{id:strin
           <h2>{quote.quote_kind==="final"?"Propuesta óptica final":"Propuesta óptica inicial"}</h2>
           <p>{quote.quote_kind==="final"?"Esta propuesta recoge la configuración seleccionada después de registrar las medidas disponibles. Verifica los datos de fabricación y la disponibilidad antes de confirmar el pedido.":"Esta propuesta ayuda a comparar monturas, lunas, materiales y tratamientos. Cuando requiera graduación, el precio y la configuración pueden confirmarse después de la medición externa."}</p>
         </section>
+        {quote.quote_kind==="final"&&(opticalConfig.od||opticalConfig.oi)&&<section className="quote-document-optical-config">
+          <h3>Configuración de lunas por ojo</h3>
+          <p className="quote-document-use">Uso declarado: {opticalConfig.usage||"No especificado"}</p>
+          <div className="table-wrap"><table><thead><tr><th>Ojo</th><th>Luna seleccionada</th><th>Diseño</th><th>Material / índice</th><th>PHI</th><th>Tratamientos</th></tr></thead><tbody>
+            {([{key:"OD · Derecho",config:opticalConfig.od},{key:"OI · Izquierdo",config:opticalConfig.oi}] as const).map(row=><tr key={row.key}><th>{row.key}</th><td>{row.config?[row.config.brand,row.config.model].filter(Boolean).join(" ")||row.config.product_code||"Selección manual":"Selección manual / pendiente"}</td><td>{row.config?.design||"·"}</td><td>{[row.config?.material,row.config?.index!=null?"Índice "+Number(row.config.index).toFixed(2):null].filter(Boolean).join(" · ")||"·"}</td><td>{row.config?.phi_mm!=null?Number(row.config.phi_mm)+" mm":"·"}</td><td>{(row.config?.coatings??[]).join(" · ")||"Según configuración / sin especificar"}</td></tr>)}
+          </tbody></table></div>
+          <p className="quote-document-use">La receta y las medidas se verifican con el profesional y el laboratorio antes de fabricar.</p>
+        </section>}
         <div className="quote-document-table table-wrap"><table><thead><tr><th>Producto / servicio</th><th>Tipo</th><th>Cant.</th><th>Precio unitario</th><th>Descuento</th><th>Total</th></tr></thead><tbody>
           {(items??[]).map(item=><tr key={item.id}><td>{item.description}</td><td>{({frame:"Montura",lens:"Lunas",treatment:"Tratamiento",service:"Servicio",accessory:"Accesorio",other:"Otro"} as Record<string,string>)[item.component_type]||item.component_type}</td><td>{Number(item.quantity)}</td><td>{money.format(Number(item.unit_price)||0)}</td><td>{money.format(Number(item.discount)||0)}</td><td>{money.format(Number(item.line_total)||0)}</td></tr>)}
           {!items?.length&&<tr><td colSpan={6}>No hay artículos en esta cotización.</td></tr>}
