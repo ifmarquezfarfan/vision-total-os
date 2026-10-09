@@ -17,12 +17,12 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
   if(!membership||!branch) redirect("/onboarding");
 
   const [{data:clients},{data:sales},{data:products},{data:lensProducts},{data:prescriptions},{data:orders}]=await Promise.all([
-    supabase.from("clients").select("id,full_name,dni").order("full_name").limit(300),
-    supabase.from("sales").select("id,sale_code,client_id").order("sale_at",{ascending:false}).limit(200),
-    supabase.from("products").select("id,product_code,brand,model,description,category").eq("active",true).eq("category","Montura").order("brand").limit(300),
+    supabase.from("clients").select("id,full_name,dni").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("status","active").order("full_name").limit(500),
+    supabase.from("sales").select("id,sale_code,client_id").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("sale_at",{ascending:false}).limit(300),
+    supabase.from("products").select("id,product_code,brand,model,description,category").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("active",true).eq("category","Montura").order("brand").limit(500),
     supabase.from("products").select("id,product_code,brand,model,description,sale_price,lens_design,lens_material,lens_index,lens_phi_mm,lens_coatings,lens_prism_capable,lens_sphere_min,lens_sphere_max,lens_cylinder_min,lens_cylinder_max").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).eq("active",true).eq("category","Lentes").order("brand").limit(500),
-    supabase.from("prescriptions").select("id,client_id,exam_at").order("exam_at",{ascending:false}).limit(500),
-    supabase.from("optical_orders").select("id,order_code,client_id,status,lab,lab_reference,lens_type,treatments,promised_at,qc_status,pickup_notified_at").order("created_at",{ascending:false}).limit(100)
+    supabase.from("prescriptions").select("id,client_id,exam_at").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("exam_at",{ascending:false}).limit(500),
+    supabase.from("optical_orders").select("id,order_code,client_id,status,lab,lab_reference,lens_type,treatments,promised_at,qc_status,pickup_notified_at").eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("created_at",{ascending:false}).limit(150)
   ]);
 
   const clientMap=new Map((clients??[]).map(c=>[c.id,c.full_name]));
@@ -32,7 +32,20 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{e
   const primarySaleId = String(params.from_sale ?? "");
   const primarySale = primarySaleId ? (sales ?? []).find(s => s.id === primarySaleId) : null;
   const primaryLensId = String(params.lens_product_id ?? "");
-  const selectedLens = primaryLensId ? (lensProducts ?? []).find(p => p.id === primaryLensId) : null;
+  const {data:sourceQuote}=primarySale
+    ? await supabase.from("quotes").select("optical_configuration,prescription_id,client_id")
+      .eq("sale_id",primarySale.id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle()
+    : {data:null};
+  const opticalConfiguration=(sourceQuote?.optical_configuration??{}) as {
+    usage?:string;
+    od?:{lens_product_id?:string;coatings?:string[]};
+    oi?:{lens_product_id?:string;coatings?:string[]};
+  };
+  const rightLensId=opticalConfiguration.od?.lens_product_id||primaryLensId;
+  const leftLensId=opticalConfiguration.oi?.lens_product_id||primaryLensId;
+  const selectedRightLens=rightLensId?(lensProducts??[]).find(p=>p.id===rightLensId):null;
+  const selectedLeftLens=leftLensId?(lensProducts??[]).find(p=>p.id===leftLensId):null;
+  const selectedLens=selectedRightLens||selectedLeftLens;
 
   return <div className="shell"><Sidebar/><main className="main"><header className="topbar"><strong>Pedidos ópticos</strong><span className="muted">{user.email}</span></header><div className="content">
     <div className="spread"><div><h1 className="page-title">Pedidos ópticos</h1><p className="subtitle">La orden de laboratorio concentra receta de lejos/cerca, prisma, centrado, montura, diseño/material/índice/PHI, recubrimientos, QC, entrega y adaptación.</p></div><div className="inline"><Link href="/guia" className="btn btn-secondary">Aprender</Link><Link href="/buscador-lunas" className="btn btn-primary">Buscar lunas</Link><Link href="/ventas" className="btn btn-secondary">Volver a ventas</Link></div></div>
