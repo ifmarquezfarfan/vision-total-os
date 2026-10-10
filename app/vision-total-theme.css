@@ -321,3 +321,66 @@ tr:last-child td{border-bottom:0}
   .attention-item-progress .flow{gap:5px}
   .attention-item-progress .flow li{padding-right:4px}
 }
+
+
+/* Unified optical POS: client, prescription, components, payment */
+.optical-pos-content{max-width:1580px}
+.optical-pos-heading{align-items:center;margin-bottom:18px}
+.optical-pos-heading .inline{justify-content:flex-end;flex-wrap:wrap}
+.optical-pos-form{display:grid;gap:16px}
+.optical-pos-section{display:grid;gap:16px;scroll-margin-top:82px}
+.optical-pos-section-heading{display:flex;align-items:flex-start;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.optical-pos-section-heading>div{min-width:0}
+.optical-pos-step{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:11px;background:var(--brand-soft);color:var(--brand-strong);font-size:11px;font-weight:900}
+.optical-pos-section-heading h2{margin:0 0 5px;font-size:21px}
+.optical-pos-section-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.optical-pos-flow{margin:4px 0 20px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.optical-pos-flow li{font-size:11px}
+.optical-pos-flow li small{font-size:10px;color:var(--muted)}
+.optical-pos-error{margin-bottom:16px}
+.optical-client-intake{display:grid;gap:14px}
+.optical-client-mode{display:flex;gap:8px;flex-wrap:wrap}
+.optical-client-mode .btn{min-width:150px}
+.optical-client-name{grid-column:1/-1}
+.optical-marketing-consent{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}
+.optical-pos-toggle{align-items:center;padding:11px 13px;border:1px solid #c9dfe5;border-radius:9px;background:#f2f8fa;color:var(--ink);font-weight:800}
+.optical-pos-toggle input{margin-top:0}
+.optical-rx-meta{grid-template-columns:repeat(3,minmax(0,1fr))}
+.optical-rx-table-wrap{max-width:100%}
+.optical-rx-table{min-width:810px}
+.optical-rx-table th:first-child{min-width:115px}
+.optical-rx-table td input{width:100%;min-width:90px;border:1px solid var(--line-strong);border-radius:8px;padding:9px;background:#fff;font-size:12px}
+.optical-rx-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}
+.optical-order-panel{display:grid;gap:14px;padding-top:17px;border-top:1px solid var(--line)}
+.optical-treatment-fieldset{min-width:0;margin:0;padding:13px;border:1px solid var(--line);border-radius:10px}
+.optical-treatment-fieldset legend{padding:0 6px;color:var(--ink);font-size:12px;font-weight:900}
+.optical-treatment-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px}
+.optical-treatment-grid .checkline{align-items:center}
+.optical-treatment-grid .checkline input{margin-top:0}
+.optical-payment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.optical-pos-safety-note{margin-top:2px}
+.optical-pos-submit-row{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;padding-top:15px;border-top:1px solid var(--line)}
+.optical-pos-submit{min-height:46px;padding:12px 20px}
+.attention-item-progress{grid-column:1/-1;min-width:0;margin-top:-2px;padding-top:10px;border-top:1px solid var(--line)}
+.attention-item-progress .flow{margin:0;gap:10px}
+.attention-item-progress .flow li{font-size:10px;padding-top:30px}
+.attention-item-progress .flow strong{font-size:11px}
+.attention-item-progress .flow small{font-size:9px}
+@media(max-width:1000px){
+  .optical-rx-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .optical-treatment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .optical-pos-heading{align-items:flex-start;flex-direction:column}
+  .optical-pos-heading .inline{justify-content:flex-start;width:100%}
+  .optical-pos-heading .inline .btn{flex:1}
+  .optical-pos-section{padding:14px}
+  .optical-pos-section-heading h2{font-size:19px}
+  .optical-rx-meta,.optical-rx-bottom,.optical-payment-grid{grid-template-columns:1fr}
+  .optical-treatment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .optical-pos-submit-row{display:grid;grid-template-columns:1fr}
+  .optical-pos-submit-row .btn{width:100%}
+  .optical-pos-flow{padding:10px}
+  .attention-item-progress .flow{gap:5px}
+  .attention-item-progress .flow li{padding-right:4px}
+}
