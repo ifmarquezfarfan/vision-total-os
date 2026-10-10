@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ActiveNavLink } from "@/components/active-nav-link";
 import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,35 +29,35 @@ export async function Sidebar() {
       <nav className="nav">
         <div className="nav-group nav-help">
           <span>Ayuda</span>
-          <Link href="/guia">Guía y capacitación</Link>
+          <ActiveNavLink href="/guia">Guía y capacitación</ActiveNavLink>
         </div>
         <div className="nav-group">
           <span>Operación</span>
-          <Link href="/atencion">Atención al cliente</Link>
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/clientes">Clientes</Link>
-          <Link href="/leads">Leads</Link>
-          <Link href="/cotizaciones">Cotizaciones</Link>
-          <Link href="/seguimientos">Seguimientos</Link>
-          <Link href="/ventas">Ventas</Link>
-          <Link href="/pedidos">Pedidos ópticos</Link>
-          <Link href="/buscador-lunas">Buscador de lunas</Link>
+          <ActiveNavLink href="/atencion">Atención al cliente</ActiveNavLink>
+          <ActiveNavLink href="/dashboard">Dashboard</ActiveNavLink>
+          <ActiveNavLink href="/clientes">Clientes</ActiveNavLink>
+          <ActiveNavLink href="/leads">Leads</ActiveNavLink>
+          <ActiveNavLink href="/cotizaciones">Cotizaciones</ActiveNavLink>
+          <ActiveNavLink href="/seguimientos">Seguimientos</ActiveNavLink>
+          <ActiveNavLink href="/ventas">Ventas</ActiveNavLink>
+          <ActiveNavLink href="/pedidos">Pedidos ópticos</ActiveNavLink>
+          <ActiveNavLink href="/buscador-lunas">Buscador de lunas</ActiveNavLink>
         </div>
 
         {isAdmin && (
           <div className="nav-group">
             <span>Gestión</span>
-            <Link href="/inventario">Inventario</Link>
-            <Link href="/compras">Compras</Link>
-            <Link href="/finanzas">Finanzas</Link>
+            <ActiveNavLink href="/inventario">Inventario</ActiveNavLink>
+            <ActiveNavLink href="/compras">Compras</ActiveNavLink>
+            <ActiveNavLink href="/finanzas">Finanzas</ActiveNavLink>
           </div>
         )}
 
         {isAdmin && (
           <div className="nav-group">
             <span>Sistema</span>
-            <Link href="/equipo">Equipo</Link>
-            <Link href="/auditoria">Auditoría</Link>
+            <ActiveNavLink href="/equipo">Equipo</ActiveNavLink>
+            <ActiveNavLink href="/auditoria">Auditoría</ActiveNavLink>
           </div>
         )}
       </nav>
