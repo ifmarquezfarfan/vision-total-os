@@ -309,3 +309,15 @@ tr:last-child td{border-bottom:0}
   a{color:inherit!important;text-decoration:none!important}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+
+
+/* Per-quote progress tracker, reused by the attention workflow */
+.attention-item-progress{grid-column:1/-1;min-width:0;margin-top:-2px;padding-top:10px;border-top:1px solid var(--line)}
+.attention-item-progress .flow{margin:0;gap:10px}
+.attention-item-progress .flow li{font-size:10px;padding-top:30px}
+.attention-item-progress .flow strong{font-size:11px}
+.attention-item-progress .flow small{font-size:9px}
+@media(max-width:700px){
+  .attention-item-progress .flow{gap:5px}
+  .attention-item-progress .flow li{padding-right:4px}
+}
