@@ -14,7 +14,7 @@ type SaleRow = {
 const componentOptions=[["frame","Montura"],["lens","Lunas"],["treatment","Tratamiento"],["service","Servicio"],["accessory","Accesorio"],["other","Otro"]] as const;
 function emptyRow(id:number):SaleRow{return{id,productId:"",productText:"",componentType:"other",description:"",quantity:1,price:"",cost:"",discount:"0"};}
 
-export function SaleBuilder({products,showCostField,allowPriceOverride}:{products:Product[];showCostField:boolean;allowPriceOverride:boolean}){
+export function SaleBuilder({products,showCostField,allowPriceOverride,hideSubmit=false,submitLabel="Registrar venta"}:{products:Product[];showCostField:boolean;allowPriceOverride:boolean;hideSubmit?:boolean;submitLabel?:string}){
   const [rows,setRows]=useState<SaleRow[]>([emptyRow(1)]);
   const productMap=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
   const codeMap=useMemo(()=>new Map(products.map(p=>[p.product_code.toLowerCase(),p])),[products]);
@@ -72,7 +72,7 @@ export function SaleBuilder({products,showCostField,allowPriceOverride}:{product
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
       <button type="button" className="btn btn-secondary" onClick={addBlock}>+ Agregar 3 líneas</button>
       <button type="button" className="btn btn-secondary" onClick={addRow}>+ Agregar 1 línea</button>
-      <button type="submit" className="btn btn-primary">Registrar venta</button>
+      {!hideSubmit&&<button type="submit" className="btn btn-primary">{submitLabel}</button>}
     </div>
   </div>;
 }
