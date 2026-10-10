@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 const STEPS = [
   { title: "Cotización", hint: "Datos del cliente y opciones" },
   { title: "Medición", hint: "Receta del proveedor" },
