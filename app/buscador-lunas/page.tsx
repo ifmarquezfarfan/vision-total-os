@@ -87,8 +87,12 @@ export default async function LensEnginePage({ searchParams }: { searchParams: P
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
-  const { data: branch } = await supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle();
+  const [membershipRes, branchRes] = await Promise.all([
+    supabase.from("organization_members").select("organization_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle(),
+    supabase.from("branch_members").select("branch_id").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle(),
+  ]);
+  const membership = membershipRes.data;
+  const branch = branchRes.data;
   if (!membership || !branch) redirect("/onboarding");
 
   const q = val(params.q).trim();
