@@ -28,7 +28,7 @@ export default async function SalesPage({searchParams}:{searchParams:Promise<{er
   return <div className="shell"><Sidebar/><main className="main">
     <header className="topbar"><strong>Ventas</strong><span className="muted">Caja óptica</span></header>
     <div className="content">
-      <div className="spread"><div><h1 className="page-title">Nueva venta</h1><p className="subtitle">Registra en pocos pasos la operación completa de una óptica.</p></div><Link href="/clientes" className="btn btn-secondary">Nuevo cliente</Link></div>
+      <div className="spread"><div><h1 className="page-title">Nueva venta</h1><p className="subtitle">Registra en pocos pasos la operación completa de una óptica.</p></div><div className="inline"><Link href="/clientes" className="btn btn-secondary">Nuevo cliente</Link><Link href="/ventas/nueva" className="btn btn-primary">Atención integral →</Link></div></div>
       <QuickStart title="Inicio rápido de venta" hint="La ruta normal es Cliente → productos → pago → venta. Para un segundo o tercer par, agrega otro bloque de 3 líneas." items={[
         {label:"Venta óptica típica",href:"#nueva-venta",description:"Montura + lunas + tratamiento",tone:"green"},
         {label:"Solo producto",href:"#nueva-venta",description:"Montura, luna o accesorio",tone:"blue"},
