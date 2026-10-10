@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { PrintButton } from "@/components/print-button";
 
-export default async function SaleReceiptPage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{created?:string}>}) {
+export default async function SaleReceiptPage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{created?:string;order?:string}>}) {
   const {id}=await params;
   const query=await searchParams;
   const supabase=await createClient();
@@ -24,9 +24,15 @@ export default async function SaleReceiptPage({params,searchParams}:{params:Prom
     supabase.from("sale_payments").select("paid_at,amount,payment_method,reference").eq("sale_id",sale.id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).order("paid_at",{ascending:true})
   ]);
   const fmt=(v:unknown)=>Number(v||0).toFixed(2);
+  const rawContact=String(client?.whatsapp||client?.phone||"");
+  const contactDigits=rawContact.replace(/\\D/g,"");
+  const whatsappPhone=contactDigits.length===9&&contactDigits.startsWith("9")?"51"+contactDigits:contactDigits;
+  const whatsappMessage=encodeURIComponent("Hola "+(client?.full_name||"")+", gracias por tu compra en Óptica Visión Total. Registramos la venta "+sale.sale_code+" por S/ "+fmt(sale.total)+". Si tienes alguna consulta, estamos aquí para ayudarte.");
+  const whatsappHref=whatsappPhone?"https://wa.me/"+whatsappPhone+"?text="+whatsappMessage:null;
+  const {data:linkedOrder}=query.order?await supabase.from("optical_orders").select("id,order_code").eq("id",query.order).eq("sale_id",sale.id).eq("organization_id",membership.organization_id).eq("branch_id",branch.branch_id).maybeSingle():{data:null};
   const status=sale.payment_status==="paid"?"PAGADO":sale.payment_status==="partial"?"PAGO PARCIAL":sale.payment_status==="voided"?"ANULADO":"PENDIENTE";
   return <div className="shell receipt-shell"><Sidebar/><main className="main"><header className="topbar"><strong>Comprobante interno de venta</strong><span className="muted">{user.email}</span></header><div className="content receipt-content">
-    <div className="spread receipt-toolbar"><div><h1 className="page-title">Ticket de venta</h1><p className="subtitle">Formato imprimible para papel térmico o PDF. No es un comprobante tributario electrónico.</p></div><div className="inline no-print"><Link href={"/ventas/"+sale.id} className="btn btn-secondary">Detalle de venta</Link><PrintButton/></div></div>
+    <div className="spread receipt-toolbar"><div><h1 className="page-title">Ticket de venta</h1><p className="subtitle">Formato imprimible para papel térmico o PDF. No es un comprobante tributario electrónico.</p></div><div className="inline no-print"><Link href={"/ventas/"+sale.id} className="btn btn-secondary">Detalle de venta</Link>{linkedOrder&&<Link href={"/pedidos/"+linkedOrder.id} className="btn btn-secondary">Pedido {linkedOrder.order_code}</Link>}{whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">Abrir WhatsApp ↗</a>}<PrintButton/></div></div>
     {query.created&&<p className="notice attention-alert no-print">Venta {query.created} registrada correctamente.</p>}
     <article className="thermal-receipt">
       <header className="receipt-center">
@@ -66,6 +72,6 @@ export default async function SaleReceiptPage({params,searchParams}:{params:Prom
         {sale.responsible&&<small>Atendió: {sale.responsible}</small>}
       </footer>
     </article>
-    <div className="receipt-next-steps no-print"><Link href="/atencion" className="btn btn-primary">Volver a Atención al cliente</Link><Link href={"/pedidos?from_sale="+sale.id} className="btn btn-secondary">Abrir pedido óptico</Link></div>
+    <div className="receipt-next-steps no-print"><Link href="/atencion" className="btn btn-primary">Volver a Atención al cliente</Link>{linkedOrder?<Link href={"/pedidos/"+linkedOrder.id} className="btn btn-secondary">Abrir pedido óptico</Link>:<Link href={"/pedidos?from_sale="+sale.id} className="btn btn-secondary">Abrir pedido óptico</Link>}{whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Mensaje de postventa por WhatsApp ↗</a>}</div>
   </div></main></div>;
 }
