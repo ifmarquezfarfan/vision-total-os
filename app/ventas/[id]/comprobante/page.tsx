@@ -25,7 +25,7 @@ export default async function SaleReceiptPage({params,searchParams}:{params:Prom
   ]);
   const fmt=(v:unknown)=>Number(v||0).toFixed(2);
   const rawContact=String(client?.whatsapp||client?.phone||"");
-  const contactDigits=rawContact.replace(/\\D/g,"");
+  const contactDigits=rawContact.replace(/\D/g,"");
   const whatsappPhone=contactDigits.length===9&&contactDigits.startsWith("9")?"51"+contactDigits:contactDigits;
   const whatsappMessage=encodeURIComponent("Hola "+(client?.full_name||"")+", gracias por tu compra en Óptica Visión Total. Registramos la venta "+sale.sale_code+" por S/ "+fmt(sale.total)+". Si tienes alguna consulta, estamos aquí para ayudarte.");
   const whatsappHref=whatsappPhone?"https://wa.me/"+whatsappPhone+"?text="+whatsappMessage:null;
